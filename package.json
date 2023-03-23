@@ -6,7 +6,11 @@
   "repository": "https://github.com/whenDinner/Backend",
   "author": "th-release <cth.release@gmail.com>",
   "license": "MIT",
+  "type": "module",
   "dependencies": {
     "express": "^4.18.2"
+  },
+  "scripts": {
+    "start": "node ./src/app.js"
   }
 }
