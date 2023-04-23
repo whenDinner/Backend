@@ -1,6 +1,4 @@
 export default () => ({
-  ACCESS_SECRET: process.env.ACCESS_SECRET,
-  REFRESH_SECRET: process.env.REFRESH_SECRET,
   DATABASE_HOST: process.env.DATABASE_HOST,
   DATABASE_PORT: parseInt(process.env.DATABASE_PORT) || 8000,
   DATABASE_USERNAME: process.env.DATABASE_USERNAME,
