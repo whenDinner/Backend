@@ -15,7 +15,7 @@ class jsonwebtoken {
       return {
         success: true,
         message: '',
-        user: decode
+        data: decode
       };
     } catch (err) {
       return {
