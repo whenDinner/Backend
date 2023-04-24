@@ -54,7 +54,7 @@ export class QrcodeService {
           default:
             return res.status(400).json({
               success: false,
-              message: 'invaild image type'
+              message: 'invaild data type'
             })
         }
       } catch(err) {
