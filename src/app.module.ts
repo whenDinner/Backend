@@ -17,6 +17,7 @@ import { QrcodeModule } from './qrcode/qrcode.module';
 import AccountEntity from './entities/account.entity';
 import OutgoEntity from './entities/outgo.entity';
 import QRUnitEntity from './entities/QRUnit.entity';
+import QRIterEntity from './entities/QRIter.entity';
 
 @Module({
   imports: [TypeOrmModule.forRootAsync({
@@ -29,7 +30,7 @@ import QRUnitEntity from './entities/QRUnit.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [AccountEntity, OutgoEntity, QRUnitEntity],
+        entities: [AccountEntity, OutgoEntity, QRUnitEntity, QRIterEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),
