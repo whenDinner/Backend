@@ -11,6 +11,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ConfigurationModule } from './configuration/configuration.module';
 import { RedisModule } from './utils/redis';
+import { QrcodeController } from './qrcode/qrcode.controller';
+import { QrcodeService } from './qrcode/qrcode.service';
+import { QrcodeModule } from './qrcode/qrcode.module';
+import AccountEntity from './entities/account.entity';
+import OutgoEntity from './entities/outgo.entity';
+import QRUnitEntity from './entities/QRUnit.entity';
 
 @Module({
   imports: [TypeOrmModule.forRootAsync({
@@ -23,16 +29,17 @@ import { RedisModule } from './utils/redis';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [],
+        entities: [AccountEntity, OutgoEntity, QRUnitEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),
   AccountModule, 
   OutgoModule,
   ConfigurationModule,
-  RedisModule
+  RedisModule,
+  QrcodeModule
 ],
-  controllers: [AppController, AccountController, OutgoController],
-  providers: [AppService, AccountService, OutgoService],
+  controllers: [AppController, AccountController, OutgoController, QrcodeController],
+  providers: [AppService, AccountService, OutgoService, QrcodeService],
 })
 export class AppModule {}
