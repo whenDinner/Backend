@@ -1,6 +1,7 @@
 import { CACHE_MANAGER, Inject, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Cache } from 'cache-manager';
 import { Request, Response } from 'express';
 import AccountEntity from 'src/entities/account.entity';
 import OutgoEntity from 'src/entities/outgo.entity';
