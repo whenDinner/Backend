@@ -14,7 +14,7 @@ export default class AccountEntity {
   @Column({ name: 'number', type: 'int' })
   number: number;
 
-  @Column({ name: 'number', type: 'int' })
+  @Column({ name: 'roomNumber', type: 'int' })
   roomNumber: number;
 
   @Column({ name: 'name', type: 'varchar', length: 6 })
