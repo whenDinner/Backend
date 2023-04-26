@@ -722,7 +722,7 @@
     webpack "5.79.0"
     webpack-node-externals "3.0.0"
 
-"@nestjs/common@^9.0.0":
+"@nestjs/common@^9.4.0":
   version "9.4.0"
   resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-9.4.0.tgz#3597e4f3a1278486fc2e015c94e58bcbbb4f72ca"
   integrity sha512-RUcVAQsEF4WPrmzFXEOUfZnPwrLTe1UVlzXTlSyfqfqbdWDPKDGlIPVelBLfc5/+RRUQ0I5iE4+CQvpCmkqldw==
@@ -937,6 +937,19 @@
     "@types/connect" "*"
     "@types/node" "*"
 
+"@types/cache-manager-ioredis@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@types/cache-manager-ioredis/-/cache-manager-ioredis-2.0.3.tgz#755f6f47ee298b77141f7d1aee93d9d2fa10d103"
+  integrity sha512-IIwKdlUSztH0TMk1ikRes2CDr2vV4UrSMKhdZ6fBN1++PdgAl/JsxHKRzaSThGqjDUb0UzcWo7dZF4RPPMInMA==
+  dependencies:
+    "@types/cache-manager" "*"
+    "@types/ioredis" "^4.28.10"
+
+"@types/cache-manager@*":
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/@types/cache-manager/-/cache-manager-4.0.2.tgz#5e76dd9e7881c23f332c2f48e5f326bd05ba9ac9"
+  integrity sha512-fT5FMdzsiSX0AbgnS5gDvHl2Nco0h5zYyjwDQy4yPC7Ww6DeGMVKPRqIZtg9HOXDV2kkc18SL1B0N8f0BecrCA==
+
 "@types/connect@*":
   version "3.4.35"
   resolved "https://registry.yarnpkg.com/@types/connect/-/connect-3.4.35.tgz#5fcf6ae445e4021d1fc2219a4873cc73a3bb2ad1"
@@ -993,6 +1006,13 @@
   version "4.1.6"
   resolved "https://registry.yarnpkg.com/@types/graceful-fs/-/graceful-fs-4.1.6.tgz#e14b2576a1c25026b7f02ede1de3b84c3a1efeae"
   integrity sha512-Sig0SNORX9fdW+bQuTEovKj3uHcUL6LQKbCrrqb1X7J6/ReAbhCXRAhc+SMejhLELFj2QcyuxmUooZ4bt5ReSw==
+  dependencies:
+    "@types/node" "*"
+
+"@types/ioredis@^4.28.10":
+  version "4.28.10"
+  resolved "https://registry.yarnpkg.com/@types/ioredis/-/ioredis-4.28.10.tgz#40ceb157a4141088d1394bb87c98ed09a75a06ff"
+  integrity sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==
   dependencies:
     "@types/node" "*"
 
