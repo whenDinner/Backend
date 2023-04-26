@@ -7,8 +7,18 @@ export class AccountController {
     private accountService: AccountService
   ) {};
 
-  @Post('/login')
-  login(@Req() req, @Res() res) {
-    return this.accountService.login(req, res);
+  @Get('/callback')
+  getUser(@Req() req, @Res() res) {
+    return this.accountService.getUser(req, res);
+  }
+
+  @Get('/verify')
+  getVerifyUser(@Req() req, @Res() res) {
+    return this.accountService.getVerifyUser(req, res);
+  }
+
+  @Get('/getLogin')
+  getLogin(@Res() res) {
+    return this.accountService.getLogin(res);
   }
 }
