@@ -35,10 +35,10 @@ export default class AccountEntity {
   @Column({ name: 'type', type: 'int', nullable: false })
   type: 0 | 1 | 2;
 
-  @Column({ name: 'isExit', type: 'bool' })
+  @Column({ name: 'isExit', type: 'bool', nullable: true })
   isExit: boolean;
 
-  @Column({ name: 'isOuting', type: 'bool' })
+  @Column({ name: 'isOuting', type: 'bool', nullable: true })
   isOuting: boolean;
   
   @CreateDateColumn({ name: 'createdAt' })
