@@ -22,7 +22,40 @@ export class AccountService {
     @Inject(CACHE_MANAGER)
     private cacheManager: Cache,
     private configService: ConfigService
-  ) {};
+  ) {}; 
+
+  async userSet(type: 0 | 1 | 2, user: AccountEntity, token: oidcToken) {
+    try {
+      if (!user) {
+        await this.accountRepository.insert({
+          login: token.data.login,
+          type: token.data.type
+        })
+      } 
+      if (type == 0 || type == 1) {
+        await this.accountRepository.update({ login: token.data.login }, {
+          student_id: token.data.classInfo.grade.toString() + token.data.classInfo.class.toString() + (token.data.classInfo.number < 10 ? '0' + token.data.classInfo.number.toString() : token.data.classInfo.number.toString()),
+          nickname: token.data.nickname ? token.data.nickname : '유저 ' + Math.floor(Math.random() * 4 + 3).toString(),
+          grade: token.data.classInfo.grade,
+          class: token.data.classInfo.class,
+          number: token.data.classInfo.number,
+          roomNumber: token.data.dormitory.room ? token.data.dormitory.room : null,
+          gender: token.data.gender,
+          fullname: token.data.fullname,
+          type: token.data.type
+        })
+      } else {
+        await this.accountRepository.update({ login: token.data.login }, {
+          nickname: token.data.nickname ? token.data.nickname : '유저 ' + Math.floor(Math.random() * 4 + 3).toString(),
+          fullname: token.data.fullname,
+          type: token.data.type,
+        })
+      }
+      return true
+    } catch (err) {
+      return false
+    }
+  }
 
   async getUser(req: Request, res: Response) {
     const { id_token, state } = req.query;
@@ -34,9 +67,9 @@ export class AccountService {
     
     const pubkey = await axios(this.configService.get<string>('GBSW_PUBKEY_URL')).then((res) => res.data)
     const nonce = await this.cacheManager.get<string>(state.toString())
-
+    
     this.cacheManager.del(state.toString())
-
+    
     try {
       const verified = verify(id_token.toString(), pubkey, {
         algorithms: ['ES256'],
@@ -51,42 +84,20 @@ export class AccountService {
         }
       })
 
-      if (!user) {
-        await this.accountRepository.insert({
-          login: verified.data.login,
-          nickname: verified.data.nickname,
-          student_id: verified.data.classInfo.grade.toString() + verified.data.classInfo.class.toString() + (verified.data.classInfo.number < 10 ? '0' + verified.data.classInfo.number.toString() : verified.data.classInfo.number.toString()),
-          grade: verified.data.classInfo.grade,
-          class: verified.data.classInfo.class,
-          number: verified.data.classInfo.number,
-          roomNumber: verified.data.dormitory.room,
-          fullname: verified.data.fullname,
-          gender: verified.data.gender,
-          type: verified.data.type,
-        })
-      } else {
-        user.grade = verified.data.classInfo.grade;
-        user.class = verified.data.classInfo.class;
-        user.number = verified.data.classInfo.number;
-        user.fullname = verified.data.fullname;
-        user.gender = verified.data.gender;
-        user.roomNumber = verified.data.dormitory.room;
-        user.nickname = verified.data.nickname;
-        user.type = verified.data.type;
-        user.student_id = verified.data.classInfo.grade.toString() + verified.data.classInfo.class.toString() + (verified.data.classInfo.number < 10 ? '0' + verified.data.classInfo.number.toString() : verified.data.classInfo.number.toString());
-        await this.accountRepository.save(user);
-      }
-      
+      this.userSet(verified.data.type, user, verified)
+
       const whenDinnerToken = jwt.sign(verified.data, this.configService.get<string>('JWT_SECRET'));
       
       return res.status(200).json({
         success: true,
+        type: verified.data.type,
         token: whenDinnerToken
       })
     } catch (err) {
+      console.log(err)
       return res.status(500).json({
         success: false,
-        message: 'Server Error'
+        message: 'Server Error',
       })
     }
   }
@@ -116,10 +127,15 @@ export class AccountService {
 
     try {
       const token = verify(auth, this.configService.get('JWT_SECRET')) as UserToken;
+
+      const user = await this.accountRepository.findOneByOrFail({
+        login: token.login
+      })
       
       return res.status(200).json({
         success: true,
-        token
+        token,
+        isReturn: !user.isReturn ? false : true
       })
     } catch(err) {
       return res.status(401).json({
