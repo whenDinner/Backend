@@ -7,7 +7,7 @@ class jsonwebtoken {
     return sign({
       login: user.login,
       nickname: user.nickname,
-      student_id: user.classInfo.grade.toString() + user.classInfo.class.toString() + (user.classInfo.number < 10 ? '0' + user.classInfo.number.toString() : user.classInfo.number.toString()),
+      student_id: String(user.classInfo.grade) + String(user.classInfo.class) + (user.classInfo.number < 10 ? '0' + String(user.classInfo.number) : String(user.classInfo.number)),
       grade: user.classInfo.grade,
       class: user.classInfo.class,
       number: user.classInfo.number,
