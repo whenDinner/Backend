@@ -4,23 +4,23 @@ export interface oidcToken {
   iss: string,
   sub: string,
   aud: string,
-  nonce: any,
+  nonce: string,
   data: {
     id: number,
     login: string,
-    nickname: string,
+    nickname?: string | null,
     createdAt: Date,
     type: UserType,
     classInfo: {
-      grade: number,
-      class: number,
-      number: number
+      grade?: number | null,
+      class?: number | null,
+      number?: number | null
     },
-    dormitory?: {
-      room: string
+    dormitory: {
+      room?: string | null
     },
-    gender: 'M' | 'F'
-    phone: string,
+    gender?: 'M' | 'F' | null
+    phone?: string | null,
     fullname: string
   },
   iat: number,
@@ -30,31 +30,31 @@ export interface oidcToken {
 export interface oidcTokenData {
   id: number,
   login: string,
-  nickname: string,
+  nickname?: string | null,
   createdAt: Date,
   type: UserType,
   classInfo: {
-    grade: number,
-    class: number,
-    number: number
+    grade?: number | null,
+    class?: number | null,
+    number?: number | null
   },
   dormitory?: {
-    room: string
-  },
-  gender: 'M' | 'F'
-  phone: string,
+    room?: string | null
+  } | null,
+  gender?: 'M' | 'F' | null
+  phone?: string | null,
   fullname: string
 }
 
 export interface UserToken {
   login: string,
-  nickname: string,
-  student_id: string,
-  grade: number,
-  class: number,
-  number: number,
-  roomNumber: number,
+  nickname?: string | null,
+  student_id?: string | null,
+  grade?: number | null,
+  class?: number | null,
+  number?: number | null,
+  roomNumber?: number | null,
   fullname: string,
-  gender: 'M' | 'F',
+  gender: 'M' | 'F' | null,
   type: UserType,
 }
