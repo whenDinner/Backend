@@ -14,6 +14,9 @@ import { RedisModule } from './utils/redis';
 import { QrcodeController } from './qrcode/qrcode.controller';
 import { QrcodeService } from './qrcode/qrcode.service';
 import { QrcodeModule } from './qrcode/qrcode.module';
+import { CommunityController } from './community/community.controller';
+import { CommunityService } from './community/community.service';
+import { CommunityModule } from './community/community.module';
 import AccountEntity from './entities/account.entity';
 import OutgoEntity from './entities/outgo.entity';
 import QRUnitEntity from './entities/QRUnit.entity';
@@ -38,9 +41,10 @@ import QRIterEntity from './entities/QRIter.entity';
   OutgoModule,
   ConfigurationModule,
   RedisModule,
-  QrcodeModule
+  QrcodeModule,
+  CommunityModule
 ],
-  controllers: [AppController, AccountController, OutgoController, QrcodeController],
-  providers: [AppService, AccountService, OutgoService, QrcodeService],
+  controllers: [AppController, AccountController, OutgoController, QrcodeController, CommunityController],
+  providers: [AppService, AccountService, OutgoService, QrcodeService, CommunityService],
 })
 export class AppModule {}
