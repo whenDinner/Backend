@@ -58,3 +58,8 @@ export interface UserToken {
   gender: 'M' | 'F' | null,
   type: UserType,
 }
+
+export type CommentType = 'N' | 'R'
+
+export type PostType = 
+  '공지' | '분실물' | '게시글' | '건의사항' | '익명 게시판'
