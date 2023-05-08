@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { PostType } from "src/utils/interfaces";
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
 
 @Entity({ name: "postsEntity" })
 export default class PostsEntity {
@@ -14,8 +15,8 @@ export default class PostsEntity {
   content: string;
 
   // 게시글을 어디에 썼느냐..
-  @Column({ name: 'type', type: 'tinyint', nullable: false })
-  type: number;
+  @Column({ name: 'type', type: 'varchar', nullable: false })
+  type: PostType;
 
   // 누가 씀? - uuid
   @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: false })
@@ -24,4 +25,10 @@ export default class PostsEntity {
   // 누가 씀? - id
   @Column({ name: 'user_id', type: 'varchar', length: 36, nullable: false })
   user_id: string;
+
+  @Column({ name: 'status', type: 'tinyint', nullable: false, default: 1 })
+  status: number
+
+  @CreateDateColumn({ name: 'createdAt' })
+  createdAt: Date;
 }
