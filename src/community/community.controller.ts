@@ -1,4 +1,4 @@
-import { Controller, Post, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { CommunityService } from './community.service';
 
 @Controller('community')
@@ -22,6 +22,22 @@ export class CommunityController {
 
   @Post('/post/delete')
   deletePost(@Req() request, @Res() response) {
-    return this.communityService;
+    return this.communityService.deletePost(request, response);
   }
+
+  @Post('/post/update')
+  updatePost(@Req() req, @Res() response) {
+    return this.communityService.updatePost(req, response);
+  }
+
+  @Get('/get/posts')
+  getPosts(@Req() request, @Res() response) {
+    return this.communityService.getPosts(request, response);
+  }
+
+  @Get('/get/post')
+  getPost(@Req() request, @Res() response) {
+    return this.communityService.getPost(request, response);
+  }
+
 }
