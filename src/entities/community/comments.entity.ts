@@ -1,13 +1,13 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
-
-type CommentType = 'N' | 'R'
+import { CommentType } from "src/utils/interfaces";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import AccountEntity from "../account.entity";
 
 @Entity({ name: 'commentsEntity' })
 export default class CommentsEntity {
   @PrimaryGeneratedColumn('increment', { name: 'id' })
   id: number;
 
-  // 일반 댓글이면 게시글 id, 대댓글이면 댓글 id
+  // 게시글 id
   @Column({ name: 'target', type: 'int', nullable: false })
   target: number;
 
@@ -20,10 +20,19 @@ export default class CommentsEntity {
   comment: string;
 
   // 누가 씀? - uuid
-  @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: false })
+  @ManyToOne(type => AccountEntity, user => user.uuid)
+  @JoinColumn({ name: 'user_uuid' })
   user_uuid: string;
 
   // 누가 씀? - id
-  @Column({ name: 'user_id', type: 'varchar', length: 36, nullable: false })
+  @ManyToOne(type => AccountEntity, user => user.login)
+  @JoinColumn({ name: 'user_id' })
   user_id: string;
+
+  @ManyToOne(type => CommentsEntity, comment => comment.id, { nullable: true })
+  @JoinColumn({ name: 'parent_id' })
+  parent: CommentsEntity;
+
+  @OneToMany(type => CommentsEntity, comment => comment.parent, { nullable: true })
+  children: CommentsEntity[];
 }
