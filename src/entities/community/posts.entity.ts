@@ -1,5 +1,6 @@
 import { PostType } from "src/utils/interfaces";
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import AccountEntity from "../account.entity";
 
 @Entity({ name: "postsEntity" })
 export default class PostsEntity {
@@ -19,11 +20,13 @@ export default class PostsEntity {
   type: PostType;
 
   // 누가 씀? - uuid
-  @Column({ name: 'user_uuid', type: 'varchar', length: 36, nullable: false })
+  @ManyToOne(type => AccountEntity, user => user.uuid)
+  @JoinColumn({ name: 'user_uuid' })
   user_uuid: string;
 
   // 누가 씀? - id
-  @Column({ name: 'user_id', type: 'varchar', length: 36, nullable: false })
+  @ManyToOne(type => AccountEntity, user => user.login)
+  @JoinColumn({ name: 'user_id' })
   user_id: string;
 
   @Column({ name: 'status', type: 'tinyint', nullable: false, default: 1 })
