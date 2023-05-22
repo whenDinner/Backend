@@ -4,10 +4,12 @@ import { Request, Response } from 'express';
 import AccountEntity from 'src/entities/account.entity';
 import CommentsEntity from 'src/entities/community/comments.entity';
 import PostsEntity from 'src/entities/community/posts.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
+import { validPostTypes } from 'src/utils/interfaces';
+import { isValidType } from 'src/utils/typeChecks';
 
 @Injectable()
 export class CommunityService {
@@ -24,13 +26,15 @@ export class CommunityService {
   ) {};
   
   async getPosts(req: Request, res: Response) {
-    const { offset, limit } = req.query
+    const { offset, limit, type } = req.query;
 
     try {
       if (!offset) throw new Error('offset is required')
       if (!limit) throw new Error('limit is required')
+      if (!type) throw new Error('type is required')
       if (isNaN(parseInt(limit.toString()))) throw new Error('invaild limit')
       if (isNaN(parseInt(offset.toString()))) throw new Error('invaild offset')
+      if (!isValidType(type, validPostTypes)) throw new Error('invaild type')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -41,18 +45,26 @@ export class CommunityService {
     try {
       const posts = await this.postsRepository.find({
         where: {
-          status: 1
+          status: 1,
+          type
         },
         order: {
           id: 'desc'
         },
-        take: parseInt(limit.toString()),
-        skip: parseInt(offset.toString())
+        relations: ['user_uuid']
       })
+
+      const formattedPosts = posts.map((post: any) => {
+        const { user_uuid, ...rest } = post;
+        return {
+          ...rest,
+          user_id: user_uuid.login,
+        };
+      });
 
       return res.status(200).json({
         success: true,
-        posts
+        posts: formattedPosts
       })
     } catch (err) {
       return res.status(500).json({
@@ -66,12 +78,14 @@ export class CommunityService {
     const { id } = req.query;
     
     const post = await this.postsRepository.findOne({
-      where: { id: parseInt(id.toString()) }
+      where: { id: parseInt(id.toString()) },
+      relations: ['user_uuid']
     })
 
     const comments = await this.commentsRepository.find({
-      where: { target: parseInt(id.toString()) },
-      order: { id: 'desc' }
+      where: { target: parseInt(id.toString()), parent_id: IsNull() },
+      order: { id: 'desc' },
+      relations: ['user_uuid', 'parent_id', 'childrens', 'childrens.user_uuid', 'childrens.childrens', 'childrens.childrens.user_uuid']
     })
 
     try {
@@ -85,10 +99,49 @@ export class CommunityService {
       })
     }
 
+    const userId = (post.user_uuid as any).login;
+    const { user_uuid, ...postData } = post;
+    
+    const formattedPost = {
+      ...postData,
+      user_id: userId
+    };
+
+    function processReplies(replies: any) {
+      const replyArr = [];
+    
+      for (const reply of replies) {
+        replyArr.push({
+          comment: reply.comment,
+          id: reply.id,
+          target: reply.target,
+          type: reply.type,
+          user_uuid: reply.user_uuid.uuid,
+          user_id: reply.user_uuid.login,
+          createdAt: reply.createdAt,
+          childrens: reply.childrens ? processReplies(reply.childrens) : [], // 재귀 사용
+        });
+      }
+    
+      return replyArr;
+    }
+    
+    
+    const formattedComments = comments.map((comment: CommentsEntity | any) => {
+
+      const { ...rest } = comment;
+      return {
+        ...rest,
+        user_uuid: comment.user_uuid.uuid,
+        user_id: comment.user_uuid.login,
+        childrens: comment.childrens ? processReplies(comment.childrens) : []
+      };
+    });
+
     try {
       return res.status(200).json({
         success: true,
-        post, comments
+        post: formattedPost, comments: formattedComments
       })
     } catch (err) {
       return res.status(500).json({
@@ -177,7 +230,7 @@ export class CommunityService {
         message: 'Server Error' 
       })
     }
-  }
+  } 
 
   async deletePost(req: Request, res: Response) {
     const { id } = req.body
@@ -247,7 +300,7 @@ export class CommunityService {
     }
     
     try {
-      await this.commentsRepository.insert({ target: postId, comment, type: 'N', user_uuid: user.uuid, user_id: user.login })
+      await this.commentsRepository.insert({ target: postId, comment, type: 'N', user_uuid: user.uuid })
       
       return res.status(200).json({
         success: true
@@ -288,7 +341,7 @@ export class CommunityService {
     }
     
     try {
-      await this.commentsRepository.insert({ target: commentId, comment, type: 'R', user_uuid: user.uuid, user_id: user.login })
+      await this.commentsRepository.insert({ target: commentId, comment, type: 'R', user_uuid: user.uuid })
       
       return res.status(200).json({
         success: true
