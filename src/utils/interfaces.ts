@@ -57,5 +57,8 @@ export type CommentType = 'N' | 'R'
 export type PostType = 
   '공지' | '분실물' | '게시글' | '건의사항' | '익명 게시판'
 
-export const validPostTypes: PostType[] = 
-  ['공지', '분실물', '게시글', '건의사항', '익명 게시판'];
+export type DotwType = 
+  '금' | '토' | '일'
+
+export type outgoType = 
+  '오전외출' | '오후외출' | '외출' | '외박'
