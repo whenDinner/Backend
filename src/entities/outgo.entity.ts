@@ -1,18 +1,39 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import AccountEntity from "./account.entity";
 
 @Entity({ name: 'outgoEntity' })
 export default class OutgoEntity {
   @PrimaryGeneratedColumn("uuid")
   uuid: string;
 
-  @Column({ name: "student_id", type: "varchar", length: 6, nullable: false })
-  student_id: string;
+  @ManyToOne(() => AccountEntity)
+  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
+  user_uuid: string | AccountEntity;
 
-  @Column({ name: "student_name", type: "varchar", length: 6, nullable: false })
-  student_name: string;
+  @ManyToOne(() => AccountEntity)
+  @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
+  user_id: string | AccountEntity;
 
-  @Column({ name: "type", type: "int", nullable: false })
-  type: number;
+  @Column({ name: 'fri_out', type: 'boolean', nullable: false, default: false })
+  fri_out: boolean;
+
+  @Column({ name: 'sat_pm', type: 'boolean', nullable: false, default: false })
+  sat_pm: boolean;
+
+  @Column({ name: 'sun_am', type: 'boolean', nullable: false, default: false })
+  sun_am: boolean;
+  
+  @Column({ name: 'sun_pm', type: 'boolean', nullable: false, default: false })
+  sun_pm: boolean;
+
+  @Column({ name: 'sun', type: 'boolean', nullable: false, default: false })
+  sun: boolean;
+
+  @Column({ name: 'reason', type: 'text', nullable: true })
+  reason: string;
+
+  @Column({ name: 'outgoDate', type: 'date', nullable: false })
+  outgoDate: Date;
 
   @CreateDateColumn({ name: "createdAt", nullable: false })
   createdAt: Date;
