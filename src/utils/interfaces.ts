@@ -48,13 +48,6 @@ export interface oidcTokenData {
 
 export interface UserToken {
   login: string,
-  nickname?: string | null,
-  student_id?: string | null,
-  grade?: number | null,
-  class?: number | null,
-  number?: number | null,
-  roomNumber?: number | null,
-  fullname: string,
   gender: 'M' | 'F' | null,
   type: UserType,
 }
@@ -63,3 +56,6 @@ export type CommentType = 'N' | 'R'
 
 export type PostType = 
   '공지' | '분실물' | '게시글' | '건의사항' | '익명 게시판'
+
+export const validPostTypes: PostType[] = 
+  ['공지', '분실물', '게시글', '건의사항', '익명 게시판'];
