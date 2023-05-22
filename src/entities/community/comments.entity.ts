@@ -1,5 +1,5 @@
 import { CommentType } from "src/utils/interfaces";
-import { Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import AccountEntity from "../account.entity";
 
 @Entity({ name: 'commentsEntity' })
@@ -20,19 +20,17 @@ export default class CommentsEntity {
   comment: string;
 
   // 누가 씀? - uuid
-  @ManyToOne(type => AccountEntity, user => user.uuid)
-  @JoinColumn({ name: 'user_uuid' })
+  @ManyToOne(() => AccountEntity, user => user.uuid)
+  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
   user_uuid: string;
 
-  // 누가 씀? - id
-  @ManyToOne(type => AccountEntity, user => user.login)
-  @JoinColumn({ name: 'user_id' })
-  user_id: string;
+  @ManyToOne(() => CommentsEntity, comment => comment.id, { nullable: true })
+  @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
+  parent_id: CommentsEntity;
 
-  @ManyToOne(type => CommentsEntity, comment => comment.id, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
-  parent: CommentsEntity;
-
-  @OneToMany(type => CommentsEntity, comment => comment.parent, { nullable: true })
-  children: CommentsEntity[];
+  @OneToMany(() => CommentsEntity, comment => comment.parent_id, { nullable: true })
+  childrens: CommentsEntity[];
+  
+  @CreateDateColumn({ name: 'createdAt' })
+  createdAt: Date;
 }
