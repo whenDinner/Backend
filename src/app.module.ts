@@ -36,7 +36,7 @@ import CommentsEntity from './entities/community/comments.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [AccountEntity, OutgoEntity, QRUnitEntity, QRIterEntity, CalendarEntity, PostsEntity, CommentsEntity],
+        entities: [AccountEntity, CalendarEntity, OutgoEntity, QRUnitEntity, QRIterEntity, CalendarEntity, PostsEntity, CommentsEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),
