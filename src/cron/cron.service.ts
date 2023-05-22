@@ -19,7 +19,7 @@ export class CronService {
     private configService: ConfigService
   ) {};
   
-  @Cron(CronExpression.EVERY_WEEKEND)
+  @Cron("0 0 * * 0")
   async resetOutgo() {
     const alluser = await this.accountRepository.find();
     
