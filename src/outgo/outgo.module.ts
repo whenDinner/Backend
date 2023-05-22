@@ -5,10 +5,11 @@ import OutgoEntity from 'src/entities/outgo.entity';
 import { RedisModule } from 'src/utils/redis';
 import { OutgoService } from './outgo.service';
 import { OutgoController } from './outgo.controller';
+import CalendarEntity from 'src/entities/calendar.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AccountEntity, OutgoEntity]),
+    TypeOrmModule.forFeature([AccountEntity, CalendarEntity,OutgoEntity]),
     RedisModule,
   ],
   exports: [TypeOrmModule],
