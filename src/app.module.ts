@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AccountController } from './account/account.controller';
 import { AccountService } from './account/account.service';
 import { OutgoController } from './outgo/outgo.controller';
@@ -21,6 +20,10 @@ import AccountEntity from './entities/account.entity';
 import OutgoEntity from './entities/outgo.entity';
 import QRUnitEntity from './entities/QRUnit.entity';
 import QRIterEntity from './entities/QRIter.entity';
+import { CronModule } from './cron/cron.module';
+import CalendarEntity from './entities/calendar.entity';
+import PostsEntity from './entities/community/posts.entity';
+import CommentsEntity from './entities/community/comments.entity';
 
 @Module({
   imports: [TypeOrmModule.forRootAsync({
@@ -33,18 +36,19 @@ import QRIterEntity from './entities/QRIter.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [AccountEntity, OutgoEntity, QRUnitEntity, QRIterEntity],
+        entities: [AccountEntity, OutgoEntity, QRUnitEntity, QRIterEntity, CalendarEntity, PostsEntity, CommentsEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),
+  CronModule,
   AccountModule, 
   OutgoModule,
   ConfigurationModule,
   RedisModule,
   QrcodeModule,
-  CommunityModule
+  CommunityModule,
 ],
   controllers: [AppController, AccountController, OutgoController, QrcodeController, CommunityController],
-  providers: [AppService, AccountService, OutgoService, QrcodeService, CommunityService],
+  providers: [AccountService, OutgoService, QrcodeService, CommunityService],
 })
 export class AppModule {}
