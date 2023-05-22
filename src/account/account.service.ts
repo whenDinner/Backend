@@ -129,13 +129,25 @@ export class AccountService {
       const token = verify(auth, this.configService.get('JWT_SECRET')) as UserToken;
 
       const user = await this.accountRepository.findOneByOrFail({
-        login: token.login
+        login: token.login,
+        type: token.type
       })
+
+      if (!user) throw new Error();
       
+      const formattedUser = {
+        ...user,
+        student_id: user.type >= 1 ? null : user.student_id,
+        grade: user.type >= 1 ? null : user.grade,
+        class: user.type >= 1 ? null : user.class,
+        number: user.type >= 1 ? null : user.number,
+        roomNumber: user.type >= 1 ? null : user.roomNumber,
+        gender: user.type === 2 ? null : user.gender,
+      }
+
       return res.status(200).json({
         success: true,
-        token,
-        isReturn: !user.isReturn ? false : true
+        user: formattedUser
       })
     } catch(err) {
       return res.status(401).json({
