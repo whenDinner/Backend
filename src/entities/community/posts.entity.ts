@@ -20,13 +20,13 @@ export default class PostsEntity {
   type: PostType;
 
   // 누가 씀? - uuid
-  @ManyToOne(type => AccountEntity, user => user.uuid)
-  @JoinColumn({ name: 'user_uuid' })
+  @ManyToOne(() => AccountEntity, user => user.uuid)
+  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
   user_uuid: string;
 
   // 누가 씀? - id
-  @ManyToOne(type => AccountEntity, user => user.login)
-  @JoinColumn({ name: 'user_id' })
+  @ManyToOne(() => AccountEntity, user => user.login)
+  @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
   user_id: string;
 
   @Column({ name: 'status', type: 'tinyint', nullable: false, default: 1 })
