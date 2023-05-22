@@ -8,8 +8,8 @@ import { IsNull, Repository } from 'typeorm';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
-import { validPostTypes } from 'src/utils/interfaces';
 import { isValidType } from 'src/utils/typeChecks';
+import { PostType } from 'src/utils/interfaces';
 
 @Injectable()
 export class CommunityService {
@@ -27,7 +27,8 @@ export class CommunityService {
   
   async getPosts(req: Request, res: Response) {
     const { offset, limit, type } = req.query;
-
+    const validPostTypes: PostType[] = 
+      ['공지', '분실물', '게시글', '건의사항', '익명 게시판'];
     try {
       if (!offset) throw new Error('offset is required')
       if (!limit) throw new Error('limit is required')
@@ -98,6 +99,8 @@ export class CommunityService {
         message: err.message
       })
     }
+
+    // fixed bug
 
     const userId = (post.user_uuid as any).login;
     const { user_uuid, ...postData } = post;
