@@ -19,7 +19,7 @@ export class CronService {
     private configService: ConfigService
   ) {};
   
-  @Cron("0 0 * * 0")
+  @Cron(CronExpression.EVERY_30_MINUTES)
   async resetOutgo() {
     const alluser = await this.accountRepository.find();
     
