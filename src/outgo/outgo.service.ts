@@ -28,6 +28,28 @@ export class OutgoService {
     const worksheet = workbook.Sheets[sheetName];
 
     const excelData = xlsx.utils.sheet_to_json(worksheet) as { date: Date, type: "잔류" | "귀가" }[];
+
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
+
+    const user = await this.accountRepository.findOne({
+      where: { login: verify.data.login }
+    })
+
+    try {
+      if (!xlsx) throw ({ status: 400, message: 'xlsx Error: required xlsx' })
+      if (!workbook) throw ({ status: 400, message: 'xlsx Error: you not buffer?' })
+      if (!sheetName || worksheet) throw ({ status: 400, message: 'xlsx Error: sheet Error' })
+      if (!excelData) throw ({ status: 400, message: 'xlsx Error: date, type Error' })
+      if (!token || !verify || !user || !verify.success) throw ({ status: 400, message: 'invaild token' })
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+
     for (const data of excelData) {
       try {
         const xlsxData = await this.calendarRepository.findOne({
