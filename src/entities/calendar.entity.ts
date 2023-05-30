@@ -8,6 +8,6 @@ export default class CalendarEntity {
   @Column({ name: 'type', type: 'varchar', length: 2, nullable: false })
   type: "잔류" | "귀가";
 
-  @Column({ name: 'date', type: "date", unique: true, nullable: false })
+  @Column({ name: 'date', type: "timestamp", unique: true, nullable: false })
   date: Date;
 }
