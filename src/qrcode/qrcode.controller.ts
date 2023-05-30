@@ -10,6 +10,16 @@ export class QrcodeController {
     return this.qrcodeService.get(req, res);
   }
 
+  @Post('/create/QR')
+  createQR(@Req() req, @Res() res) {
+
+  }
+
+  @Post('/delete/QR')
+  deleteQR(@Req() req, @Res() res) {
+     
+  }
+
   @Post('/access/QR')
   accessQR(@Req() req, @Res() res) {
     
