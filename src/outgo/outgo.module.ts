@@ -6,10 +6,12 @@ import { RedisModule } from 'src/utils/redis';
 import { OutgoService } from './outgo.service';
 import { OutgoController } from './outgo.controller';
 import CalendarEntity from 'src/entities/calendar.entity';
+import { MulterModule } from '@nestjs/platform-express';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AccountEntity, CalendarEntity,OutgoEntity]),
+    TypeOrmModule.forFeature([AccountEntity, CalendarEntity, OutgoEntity]),
+    MulterModule.register({}),
     RedisModule,
   ],
   exports: [TypeOrmModule],
