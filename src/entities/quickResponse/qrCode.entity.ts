@@ -1,5 +1,6 @@
 import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import AccountEntity from "../account.entity";
+import QrCodeUserEntity from "./qrCode.user.entity";
 
 type QRType = "BUS" | "DRM"
 
@@ -17,6 +18,6 @@ export default class QRCodeEntity {
   @Column({ name: 'href', type: 'text', nullable: false })
   href: string;
 
-  @ManyToMany(() => AccountEntity, { onDelete: 'CASCADE' })
-  user_uuid: string | AccountEntity;
+  @ManyToMany(() => QrCodeUserEntity)
+  childrens: string | QrCodeUserEntity;
 }
