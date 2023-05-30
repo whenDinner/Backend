@@ -19,7 +19,7 @@ export class CronService {
     private configService: ConfigService
   ) {};
   
-  @Cron(CronExpression.EVERY_30_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async resetOutgo() {
     const alluser = await this.accountRepository.find();
     
@@ -44,6 +44,6 @@ export class CronService {
       if (!userData) {
         await this.outgoRepository.insert({ user_uuid: user.uuid, user_id: user.login, outgoDate: calendar.date })
       }
-    }) 
+    })
   }
 }
