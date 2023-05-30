@@ -52,7 +52,9 @@ export class CommunityService {
         order: {
           id: 'desc'
         },
-        relations: ['user_uuid']
+        relations: ['user_uuid'],
+        take: parseInt(limit.toString()),
+        skip: parseInt(offset.toString())
       })
 
       const formattedPosts = posts.map((post: any) => {
@@ -99,8 +101,6 @@ export class CommunityService {
         message: err.message
       })
     }
-
-    // fixed bug
 
     const userId = (post.user_uuid as any).login;
     const { user_uuid, ...postData } = post;
@@ -173,7 +173,6 @@ export class CommunityService {
       if (type == '공지') { 
         if (user.type !== 2) throw new Error('공지사항은 관리자만 쓸 수 있습니다.')
       }
-
     } catch (err) {
       return res.status(400).json({
         success: false,
