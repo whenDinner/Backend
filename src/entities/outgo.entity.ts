@@ -6,11 +6,11 @@ export default class OutgoEntity {
   @PrimaryGeneratedColumn("uuid")
   uuid: string;
 
-  @ManyToOne(() => AccountEntity)
+  @ManyToOne(() => AccountEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
   user_uuid: string | AccountEntity;
 
-  @ManyToOne(() => AccountEntity)
+  @ManyToOne(() => AccountEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
   user_id: string | AccountEntity;
 

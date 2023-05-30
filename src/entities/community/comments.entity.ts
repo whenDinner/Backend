@@ -28,7 +28,7 @@ export default class CommentsEntity {
   @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
   parent_id: CommentsEntity;
 
-  @OneToMany(() => CommentsEntity, comment => comment.parent_id, { nullable: true, onDelete: 'CASCADE' })
+  @OneToMany(() => CommentsEntity, comment => comment.parent_id, { nullable: true, onDelete: 'CASCADE', onUpdate: 'CASCADE' })
   childrens: CommentsEntity[];
   
   @CreateDateColumn({ name: 'createdAt' })
