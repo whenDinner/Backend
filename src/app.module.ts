@@ -18,12 +18,12 @@ import { CommunityService } from './community/community.service';
 import { CommunityModule } from './community/community.module';
 import AccountEntity from './entities/account.entity';
 import OutgoEntity from './entities/outgo.entity';
-import QRUnitEntity from './entities/QRUnit.entity';
-import QRIterEntity from './entities/QRIter.entity';
 import { CronModule } from './cron/cron.module';
 import CalendarEntity from './entities/calendar.entity';
 import PostsEntity from './entities/community/posts.entity';
 import CommentsEntity from './entities/community/comments.entity';
+import QRCodeEntity from './entities/quickResponse/qrCode.entity';
+import QrCodeUserEntity from './entities/quickResponse/qrCode.user.entity';
 
 @Module({
   imports: [TypeOrmModule.forRootAsync({
@@ -36,7 +36,7 @@ import CommentsEntity from './entities/community/comments.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [AccountEntity, CalendarEntity, OutgoEntity, QRUnitEntity, QRIterEntity, CalendarEntity, PostsEntity, CommentsEntity],
+        entities: [AccountEntity, CalendarEntity, OutgoEntity, QRCodeEntity, QrCodeUserEntity, CalendarEntity, PostsEntity, CommentsEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),
