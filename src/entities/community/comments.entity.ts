@@ -20,15 +20,15 @@ export default class CommentsEntity {
   comment: string;
 
   // 누가 씀? - uuid
-  @ManyToOne(() => AccountEntity, user => user.uuid)
+  @ManyToOne(() => AccountEntity, user => user.uuid, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
   user_uuid: string;
 
-  @ManyToOne(() => CommentsEntity, comment => comment.id, { nullable: true })
+  @ManyToOne(() => CommentsEntity, comment => comment.id, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })
   parent_id: CommentsEntity;
 
-  @OneToMany(() => CommentsEntity, comment => comment.parent_id, { nullable: true })
+  @OneToMany(() => CommentsEntity, comment => comment.parent_id, { nullable: true, onDelete: 'CASCADE' })
   childrens: CommentsEntity[];
   
   @CreateDateColumn({ name: 'createdAt' })
