@@ -2,12 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Request, Response } from 'express';
+import { extname } from 'path';
 import AccountEntity from 'src/entities/account.entity';
 import CalendarEntity from 'src/entities/calendar.entity';
 import OutgoEntity from 'src/entities/outgo.entity';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
 import { isValidType } from 'src/utils/typeChecks';
 import { MoreThan, Repository } from 'typeorm';
+import { read, utils } from 'xlsx';
+import * as momenttz from 'moment-timezone';
+import * as moment from 'moment'
 
 @Injectable()
 export class OutgoService {
@@ -21,14 +25,19 @@ export class OutgoService {
     private readonly configService: ConfigService
   ) {};
 
-  async updateCalendar(req: Request, res: Response) {
-    const { xlsx } = req.body;
-    const workbook = xlsx.read(xlsx, { type: 'buffer' });
+  async updateCalendar(req: Request, res: Response, file: Express.Multer.File) {
+    const fileExtName = extname(file.originalname);
+    if (
+      !fileExtName.includes('xlsx') && 
+      !fileExtName.includes('excel')
+    ) 
+      return res.status(400).json({ success: false, message: 'check your xlsx Type' })
+
+    const workbook = read(file.buffer, { type: 'buffer', cellDates: true });
     const sheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[sheetName];
 
-    const excelData = xlsx.utils.sheet_to_json(worksheet) as { date: Date, type: "잔류" | "귀가" }[];
-
+    const excelData = utils.sheet_to_json(worksheet) as { date: Date, type: "잔류" | "귀가" }[];
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
 
@@ -37,10 +46,9 @@ export class OutgoService {
     })
 
     try {
-      if (!xlsx) throw ({ status: 400, message: 'xlsx Error: required xlsx' })
+      if (!file) throw ({ status: 400, message: 'xlsx Error: required xlsx' })
       if (!workbook) throw ({ status: 400, message: 'xlsx Error: you not buffer?' })
-      if (!sheetName || worksheet) throw ({ status: 400, message: 'xlsx Error: sheet Error' })
-      if (!excelData) throw ({ status: 400, message: 'xlsx Error: date, type Error' })
+      if (!excelData[0]) throw ({ status: 400, message: 'xlsx Error: date, type Error' })
       if (!token || !verify || !user || !verify.success) throw ({ status: 400, message: 'invaild token' })
     } catch(err) {
       return res.status(err.status).json({
@@ -48,39 +56,30 @@ export class OutgoService {
         message: err.message
       })
     }
-
-
+    
     for (const data of excelData) {
-      try {
-        const xlsxData = await this.calendarRepository.findOne({
-          where: {
-            date: data.date
-          }
-        })
-        
-        if (!xlsxData) {
-          await this.calendarRepository.insert({
-            date: data.date,
-            type: data.type
-          })
-          .catch(() => { throw ({ status: 400, message: 'type Error' }) })
-        } else {
-          await this.calendarRepository.update({ date: data.date }, {
-            type: data.type
-          })
-          .catch(() => { throw ({ status: 400, message: 'type Error' }) })
+      const dataDate = momenttz(data.date).tz('Asia/Seoul').toDate()
+      const Datea = new Date(moment(dataDate).add({ days: 1 }).format('YYYY-MM-DDT00:00:00.000Z'))
+      const xlsxData = await this.calendarRepository.findOne({
+        where: {
+          date: Datea
         }
-      } catch (err) {
-        return res.status(err.status).json({
-          success: false,
-          message: err.message
+      })
+      
+      if (!xlsxData) {
+        await this.calendarRepository.insert({
+          date: Datea,
+          type: data.type
+        })
+      } else {
+        await this.calendarRepository.update({ date: Datea }, {
+          type: data.type
         })
       }
     }
     
     return res.status(200).json({
-      success: true,
-      message: ''
+      success: true
     })
   }
 

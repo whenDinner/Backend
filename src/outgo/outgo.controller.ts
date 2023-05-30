@@ -1,5 +1,6 @@
-import { Controller, Post, Req, Res } from '@nestjs/common';
+import { Controller, Post, Req, Res, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { OutgoService } from './outgo.service';
+import { FileInterceptor } from '@nestjs/platform-express';
 
 @Controller('outgo')
 export class OutgoController {
@@ -13,7 +14,8 @@ export class OutgoController {
   }
 
   @Post('/update/calendar')
-  updateCalendar(@Req() req, @Res() res) {
-    return this.outgoService.updateCalendar(req, res);
+  @UseInterceptors(FileInterceptor('file'))
+  updateCalendar(@Req() req, @Res() res, @UploadedFile() file: Express.Multer.File) {
+    return this.outgoService.updateCalendar(req, res, file);
   }
 }
