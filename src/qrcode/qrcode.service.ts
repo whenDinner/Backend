@@ -66,17 +66,25 @@ export class QrcodeService {
   }
 
   async accessQR(req: Request, res: Response) {
-    const name = req.body.name
-
+    const name = req.body.name;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
 
     const user = await this.accountRepository.findOne({
       where: { login: verify.data.login }
     })
+    
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        name
+      }
+    })
 
     try {
       if (!name) throw ({ status: 400, message: 'name을 입력해주세요.' })
+      else {
+        if (!QR) throw({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+      }
       if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
     } catch(err) {
       return res.status(err.status).json({
@@ -84,5 +92,16 @@ export class QrcodeService {
         message: err.message
       })
     }
+
+    return res.status(200).json({
+      success: true,
+      message: '',
+      QuickResponse: {
+        uuid: QR.uuid,
+        name: QR.name,
+        href: QR.href,
+        type: QR.type
+      }
+    })
   }
 }
