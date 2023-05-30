@@ -62,7 +62,7 @@ export class AccountService {
     if (!this.cacheManager.get(state.toString())) 
       return res.status(400).json({
         success: false,
-        message: 'invaild state'
+        message: 'invalid state'
       })
     
     const pubkey = await axios(this.configService.get<string>('GBSW_PUBKEY_URL')).then((res) => res.data)

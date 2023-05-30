@@ -49,7 +49,7 @@ export class OutgoService {
       if (!file) throw ({ status: 400, message: 'xlsx Error: required xlsx' })
       if (!workbook) throw ({ status: 400, message: 'xlsx Error: you not buffer?' })
       if (!excelData[0]) throw ({ status: 400, message: 'xlsx Error: date, type Error' })
-      if (!token || !verify || !user || !verify.success) throw ({ status: 400, message: 'invaild token' })
+      if (!token || !verify || !user || !verify.success) throw ({ status: 400, message: 'invalid token' })
     } catch(err) {
       return res.status(err.status).json({
         success: false,
@@ -98,9 +98,9 @@ export class OutgoService {
 
     try {
       if (!type) throw ({ status: 400, message: 'required type' })
-      if (!token || !verify || !user) throw ({ status: 400, message: 'invaild token' })
-      if (!isValidType(dotw, validDotwType)) throw ({ status: 400, message: 'invaild dotwType' })
-      if (!isValidType(type, validOutgoType)) throw ({ status: 400, message: 'invaild outgoType' })
+      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
+      if (!isValidType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
+      if (!isValidType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
       if (dotw === '금' && type !== '외박') throw ({ status: 400, message: '금요일엔 외박 이외엔 다른것 선택 불가' });
       if (dotw === '토' && type === '오전외출') throw ({ status: 400, message: '토요일엔 오전외출 불가' });
       if (dotw === '일' && type === '외박') throw ({ status: 400, message: '일요일엔 외박 불가' })

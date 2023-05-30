@@ -33,9 +33,9 @@ export class CommunityService {
       if (!offset) throw new Error('offset is required')
       if (!limit) throw new Error('limit is required')
       if (!type) throw new Error('type is required')
-      if (isNaN(parseInt(limit.toString()))) throw new Error('invaild limit')
-      if (isNaN(parseInt(offset.toString()))) throw new Error('invaild offset')
-      if (!isValidType(type, validPostTypes)) throw new Error('invaild type')
+      if (isNaN(parseInt(limit.toString()))) throw new Error('invalid limit')
+      if (isNaN(parseInt(offset.toString()))) throw new Error('invalid offset')
+      if (!isValidType(type, validPostTypes)) throw new Error('invalid type')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -93,8 +93,8 @@ export class CommunityService {
 
     try {
       if (!id) throw new Error('id is required')
-      if (isNaN(parseInt(id.toString()))) throw new Error('invaild id')
-      if (!post) throw new Error('invaild post')
+      if (isNaN(parseInt(id.toString()))) throw new Error('invalid id')
+      if (!post) throw new Error('invalid post')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -168,8 +168,8 @@ export class CommunityService {
       if (!title) throw new Error('title is required')
       if (!content) throw new Error('content is required')
       if (!type) throw new Error('type is required')
-      if (!verify.success) throw new Error('invaild token')
-      if (!user) throw new Error('invaild token')
+      if (!verify.success) throw new Error('invalid token')
+      if (!user) throw new Error('invalid token')
       if (type == '공지') { 
         if (user.type !== 2) throw new Error('공지사항은 관리자만 쓸 수 있습니다.')
       }
@@ -209,10 +209,10 @@ export class CommunityService {
       if (!token) throw new Error('you should token check ( login )')
       if (!title) throw new Error('title is required')
       if (!content) throw new Error('content is required')
-      if (!verify.success) throw new Error('invaild token')
-      if (!user) throw new Error('invaild token')
-      if (!post) throw new Error('invaild post')
-      if (post.user_uuid !== user.uuid) throw new Error('invaild post')
+      if (!verify.success) throw new Error('invalid token')
+      if (!user) throw new Error('invalid token')
+      if (!post) throw new Error('invalid post')
+      if (post.user_uuid !== user.uuid) throw new Error('invalid post')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -250,10 +250,10 @@ export class CommunityService {
     try {
       if (!id) throw new Error('id is required')
       if (!token) throw new Error('you should token check ( login )')
-      if (!verify.success) throw new Error('invaild token')
-      if (!user) throw new Error('invaild token')
-      if (!post) throw new Error('invaild post')
-      if (post.user_uuid !== user.uuid) throw new Error('invaild post')
+      if (!verify.success) throw new Error('invalid token')
+      if (!user) throw new Error('invalid token')
+      if (!post) throw new Error('invalid post')
+      if (post.user_uuid !== user.uuid) throw new Error('invalid post')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -292,8 +292,8 @@ export class CommunityService {
       if (!postId) throw new Error('postId is required')
       if (!post) throw new Error('That post doesn\'t exist.')
       if (!comment) throw new Error('comment is null')
-      if (!verify.success) throw new Error('invaild token')
-      if (!user) throw new Error('invaild token')
+      if (!verify.success) throw new Error('invalid token')
+      if (!user) throw new Error('invalid token')
     } catch(err) {
       return res.status(400).json({
         success: false,
@@ -333,8 +333,8 @@ export class CommunityService {
       if (!commentId) throw new Error('postId is required')
       if (!commentData) throw new Error('That comment doesn\'t exist.')
       if (!comment) throw new Error('comment is null')
-      if (!verify.success) throw new Error('invaild token')
-      if (!user) throw new Error('invaild token')
+      if (!verify.success) throw new Error('invalid token')
+      if (!user) throw new Error('invalid token')
     } catch(err) {
       return res.status(400).json({
         success: false,
