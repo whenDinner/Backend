@@ -5,13 +5,23 @@ import { QrcodeService } from './qrcode.service';
 export class QrcodeController {
   constructor(private qrcodeService: QrcodeService) {};
 
-  @Get('/get')
-  get(@Req() req, @Res() res) {
+  @Get('/getInfo')
+  getInfo(@Req() req, @Res() res) {
     return this.qrcodeService.get(req, res);
   }
 
-  @Post('/verify')
-  verify(@Req() req, @Res() res) {
-    return this.qrcodeService.verify(req, res);
+  @Post('/access/QR')
+  accessQR(@Req() req, @Res() res) {
+    
+  }
+
+  @Post('/access/bus')
+  accessBus(@Req() req, @Res() res) {
+    
+  }
+
+  @Post('/access/drm')
+  accessDrm(@Req() req, @Res() res) {
+    
   }
 }
