@@ -11,7 +11,7 @@ export default class AccountEntity {
   @Column({ name: 'nickname', type: 'varchar', length: 36, nullable: true })
   nickname?: string | null;
 
-  @Column({ name: 'student_id', type: 'varchar', length: 6, nullable: false })
+  @Column({ name: 'student_id', type: 'varchar', length: 6, nullable: true })
   student_id?: string | null;
 
   @Column({ name: 'grade', type: 'int', nullable: true })
@@ -26,7 +26,7 @@ export default class AccountEntity {
   @Column({ name: 'roomNumber', type: 'varchar', length: 4, nullable: true })
   roomNumber?: string | null;
 
-  @Column({ name: 'fullname', type: 'varchar', length: 6 })
+  @Column({ name: 'fullname', type: 'varchar', length: 6, nullable: true })
   fullname: string;
 
   @Column({ name: 'gender', type: "varchar", length: 1, nullable: true })
