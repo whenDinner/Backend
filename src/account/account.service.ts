@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import axios from 'axios';
 import { Cache } from 'cache-manager';
-import { Request, Response } from 'express';
+import e, { Request, Response } from 'express';
 import AccountEntity from 'src/entities/account.entity';
 import OutgoEntity from 'src/entities/outgo.entity';
 import getRandom from 'src/utils/getRandom';
@@ -68,7 +68,7 @@ export class AccountService {
     const pubkey = await axios(this.configService.get<string>('GBSW_PUBKEY_URL')).then((res) => res.data)
     const nonce = await this.cacheManager.get<string>(state.toString())
     
-    this.cacheManager.del(state.toString())
+    await this.cacheManager.del(state.toString())
     
     try {
       const verified = verify(id_token.toString(), pubkey, {
@@ -87,14 +87,12 @@ export class AccountService {
       this.userSet(verified.data.type, user, verified)
 
       const whenDinnerToken = jwt.sign(verified.data, this.configService.get<string>('JWT_SECRET'));
-      
       return res.status(200).json({
         success: true,
         type: verified.data.type,
         token: whenDinnerToken
       })
     } catch (err) {
-      console.log(err)
       return res.status(500).json({
         success: false,
         message: 'Server Error',
@@ -124,31 +122,36 @@ export class AccountService {
 
   async getVerifyUser(req: Request, res: Response) {
     const auth = req.headers.authorization.split(' ')[1];
-
     try {
       const token = verify(auth, this.configService.get('JWT_SECRET')) as UserToken;
-
-      const user = await this.accountRepository.findOneByOrFail({
-        login: token.login,
-        type: token.type
+      
+      const user = await this.accountRepository.findOne({
+        where: {
+          login: token.login,
+          type: token.type
+        }
       })
 
       if (!user) throw new Error();
-      
-      const formattedUser = {
+      else {
+        const formattedUser = {
         ...user,
         student_id: user.type >= 1 ? null : user.student_id,
-        grade: user.type >= 1 ? null : user.grade,
-        class: user.type >= 1 ? null : user.class,
-        number: user.type >= 1 ? null : user.number,
-        roomNumber: user.type >= 1 ? null : user.roomNumber,
-        gender: user.type === 2 ? null : user.gender,
+          grade: user.type >= 1 ? null : user.grade,
+          class: user.type >= 1 ? null : user.class,
+          number: user.type >= 1 ? null : user.number,
+          roomNumber: user.type >= 1 ? null : user.roomNumber,
+          gender: user.type === 2 ? null : user.gender,
+        }
+        
+        return res.status(200).json({
+          success: true,
+          user: formattedUser
+        })
       }
 
-      return res.status(200).json({
-        success: true,
-        user: formattedUser
-      })
+      
+
     } catch(err) {
       return res.status(401).json({
         success: false,
