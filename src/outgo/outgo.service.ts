@@ -107,7 +107,7 @@ export class OutgoService {
       if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
       if (!validType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
       if (!validType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
-      if (user.gs === 4 || user.rh === 2) throw ({ status: 400, message: '귀가하는 학생들은 외출/외박을 신청할 수 없습니다.' })
+      if (user.gs === 4 || user.rh == 2) throw ({ status: 400, message: '귀가하는 학생들은 외출/외박을 신청할 수 없습니다.' })
       if (dotw === '금' && type !== '외박') throw ({ status: 400, message: '금요일엔 외박 이외엔 다른것 선택 불가' });
       if (dotw === '토' && type === '오전외출') throw ({ status: 400, message: '토요일엔 오전외출 불가' });
       if (dotw === '일' && type === '외박') throw ({ status: 400, message: '일요일엔 외박 불가' })

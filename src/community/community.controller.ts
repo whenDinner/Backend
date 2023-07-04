@@ -15,6 +15,11 @@ export class CommunityController {
     return this.communityService.getPost(request, response);
   }
 
+  @Get('/search/posts')
+  searchPosts(@Req() request, @Res() response) {
+    return this.communityService.searchPosts(request, response);
+  }
+
   @Post('/post/insert')
   insertPost(@Req() request, @Res() response) {
     return this.communityService.insertPost(request, response);

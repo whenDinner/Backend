@@ -4,7 +4,7 @@ import { Request, Response } from 'express';
 import AccountEntity from 'src/entities/account.entity';
 import CommentsEntity from 'src/entities/community/comments.entity';
 import PostsEntity from 'src/entities/community/posts.entity';
-import { IsNull, Repository } from 'typeorm';
+import { IsNull, Like, Repository } from 'typeorm';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
@@ -49,6 +49,70 @@ export class CommunityService {
           status: 1,
           type
         },
+        order: {
+          id: 'desc'
+        },
+        relations: ['author'],
+        take: parseInt(limit.toString()),
+        skip: parseInt(offset.toString())
+      })
+
+      const formattedPosts = posts.map((post: any) => {
+        const { author, ...rest } = post;
+        return {
+          ...rest,
+          author: {
+            uuid: author.uuid,
+            login: author.login
+          },
+        };
+      });
+
+      return res.status(200).json({
+        success: true,
+        posts: formattedPosts
+      })
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server Error'
+      })
+    }
+  }
+
+  async searchPosts(req: Request, res: Response) {
+    const { offset, limit, type, search } = req.query;
+    const validPostTypes: PostType[] = 
+      ['공지', '분실물', '게시글', '건의사항', '익명 게시판'];
+    try {
+      if (!search) throw new Error('search is required')
+      if (!offset) throw new Error('offset is required')
+      if (!limit) throw new Error('limit is required')
+      if (!type) throw new Error('type is required')
+      if (isNaN(parseInt(limit.toString()))) throw new Error('invalid limit')
+      if (isNaN(parseInt(offset.toString()))) throw new Error('invalid offset')
+      if (!validType(type, validPostTypes)) throw new Error('invalid type')
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    try {
+      const posts = await this.postsRepository.find({
+        where: [
+          {
+            title: Like(search.toString()),
+            status: 1,
+            type,
+          },
+          {
+            content: Like(search.toString()),
+            status: 1,
+            type
+          }
+        ],
         order: {
           id: 'desc'
         },
