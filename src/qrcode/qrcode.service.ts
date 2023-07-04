@@ -65,7 +65,7 @@ export class QrcodeService {
     }
   }
 
-  async accessQR(req: Request, res: Response) {
+  async getInfo(req: Request, res: Response) {
     const name = req.body.name;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
@@ -100,8 +100,136 @@ export class QrcodeService {
         uuid: QR.uuid,
         name: QR.name,
         href: QR.href,
-        type: QR.type
+        createdAt: QR.createAt
       }
+    })
+  }
+
+  async createQR(req: Request, res: Response) {
+    const { name, href } = req.body;
+
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
+
+    const user = await this.accountRepository.findOne({
+      where: { login: verify.data.login }
+    })
+    
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        name
+      }
+    })
+
+    try {
+      if (!name) throw ({ status: 400, message: 'name을 입력해주세요.' })
+      if (!href) throw ({ status: 400, message: 'href을 입력해주세요.' })
+      if (QR) throw ({ status: 400, message: '이미 있는 Quick Response 코드 입니다.' })
+      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    await this.qrCodeRepository.insert({
+      name,
+      href
+    })
+
+    return res.status(201).json({
+      success: true,
+      message: ''
+    })
+  }
+
+  async deleteQR(req: Request, res: Response) {
+    const uuid = req.body.id;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
+
+    const user = await this.accountRepository.findOne({
+      where: { login: verify.data.login }
+    })
+    
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        uuid
+      }
+    })
+
+    try {
+      if (!uuid) throw ({ status: 400, message: 'id을 입력해주세요.' })
+      else {
+        if (!QR) throw({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+      }
+      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    await this.qrCodeRepository.delete({ uuid: QR.uuid })
+
+    return res.status(200).json({
+      success: true
+    })
+  }
+
+  async accessDrm(req: Request, res: Response) {
+    const name = req.body.name;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
+
+    const user = await this.accountRepository.findOne({
+      where: { login: verify.data.login }
+    })
+    
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        name
+      }
+    })
+
+    try {
+      if (!name) throw ({ status: 400, message: 'name을 입력해주세요.' })
+      else {
+        if (!QR) throw({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+      }
+      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    const qrUser = await this.qrCodeUserRepository.findOne({
+      where: {
+        qr_uuid: QR.uuid,
+        author: user.uuid
+      }
+    })
+
+    if (!qrUser) {
+      await this.qrCodeUserRepository.insert({
+        qr_uuid: QR.uuid,
+        author: user.uuid,
+        user_id: user.login
+      })
+    } else {
+      await this.qrCodeUserRepository.delete({
+        qr_uuid: QR.uuid,
+        author: user.uuid,
+        user_id: user.login
+      })
+    }
+
+    return res.status(200).json({
+      success: true
     })
   }
 }

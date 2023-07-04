@@ -7,8 +7,8 @@ import AccountEntity from 'src/entities/account.entity';
 import CalendarEntity from 'src/entities/calendar.entity';
 import OutgoEntity from 'src/entities/outgo.entity';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
-import { isValidType } from 'src/utils/typeChecks';
-import { MoreThan, Repository } from 'typeorm';
+import { validType } from 'src/utils/typeChecks';
+import { Between, MoreThan, Repository } from 'typeorm';
 import { read, utils } from 'xlsx';
 import * as momenttz from 'moment-timezone';
 import * as moment from 'moment'
@@ -49,7 +49,7 @@ export class OutgoService {
       if (!file) throw ({ status: 400, message: 'xlsx Error: required xlsx' })
       if (!workbook) throw ({ status: 400, message: 'xlsx Error: you not buffer?' })
       if (!excelData[0]) throw ({ status: 400, message: 'xlsx Error: date, type Error' })
-      if (!token || !verify || !user || !verify.success) throw ({ status: 400, message: 'invalid token' })
+      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
     } catch(err) {
       return res.status(err.status).json({
         success: false,
@@ -58,6 +58,12 @@ export class OutgoService {
     }
     
     for (const data of excelData) {
+      if (!data || !data.date || !data.type) {
+        return res.status(400).json({
+          success: false,
+          message: 'xlsx Error: date, type Error'
+        })
+      };
       const dataDate = momenttz(data.date).tz('Asia/Seoul').toDate()
       const Datea = new Date(moment(dataDate).add({ days: 1 }).format('YYYY-MM-DDT00:00:00.000Z'))
       const xlsxData = await this.calendarRepository.findOne({
@@ -98,9 +104,10 @@ export class OutgoService {
 
     try {
       if (!type) throw ({ status: 400, message: 'required type' })
-      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
-      if (!isValidType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
-      if (!isValidType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
+      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
+      if (!validType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
+      if (!validType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
+      if (user.gs === 4 || user.rh === 2) throw ({ status: 400, message: '귀가하는 학생들은 외출/외박을 신청할 수 없습니다.' })
       if (dotw === '금' && type !== '외박') throw ({ status: 400, message: '금요일엔 외박 이외엔 다른것 선택 불가' });
       if (dotw === '토' && type === '오전외출') throw ({ status: 400, message: '토요일엔 오전외출 불가' });
       if (dotw === '일' && type === '외박') throw ({ status: 400, message: '일요일엔 외박 불가' })
@@ -122,7 +129,13 @@ export class OutgoService {
       });
 
       if (!calendar) throw({ status: 500, message: '더이상의 잔류, 귀가 표가 없습니다. 관리자에게 문의해주세요' })
-  
+      
+      if (type.includes('외출'))
+        await this.accountRepository.update({ login: verify.data.login }, { gs: 2 })
+      else {
+        await this.accountRepository.update({ login: verify.data.login }, { gs: 3 })
+      }
+
       const userAnswer = await this.outgoRepository.findOne({
         where: {
           outgoDate: calendar.date,
@@ -150,11 +163,28 @@ export class OutgoService {
           reason
         })
       }
+
+      return res.status(200).json({
+        success: true
+      })
     } catch(err) {
       return res.status(err.status).json({
         success: false,
         message: err.message
       })
     }
+  }
+
+  async getCalendar(req: Request, res: Response) {
+    const calendar = await this.calendarRepository.find({
+      order: {
+        date: 'desc'
+      }
+    });
+
+    return res.status(200).json({
+      success: true,
+      calendar
+    })
   }
 }

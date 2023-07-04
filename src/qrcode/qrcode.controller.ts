@@ -1,37 +1,32 @@
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Put, Req, Res } from '@nestjs/common';
 import { QrcodeService } from './qrcode.service';
 
 @Controller('qrcode')
 export class QrcodeController {
   constructor(private qrcodeService: QrcodeService) {};
 
-  @Get('/getInfo')
+  @Get('/get')
   getInfo(@Req() req, @Res() res) {
     return this.qrcodeService.get(req, res);
   }
 
-  @Post('/create/QR')
+  @Put('/create')
   createQR(@Req() req, @Res() res) {
-
+    return this.qrcodeService.createQR(req, res);
   }
 
-  @Post('/delete/QR')
+  @Delete('/delete')
   deleteQR(@Req() req, @Res() res) {
-     
+    return this.qrcodeService.deleteQR(req, res);
   }
 
-  @Post('/access/QR')
+  @Post('/getInfo')
   accessQR(@Req() req, @Res() res) {
-    
-  }
-
-  @Post('/access/bus')
-  accessBus(@Req() req, @Res() res) {
-    
+    return this.qrcodeService.getInfo(req, res);
   }
 
   @Post('/access/drm')
   accessDrm(@Req() req, @Res() res) {
-    
+    return this.qrcodeService.accessDrm(req, res);
   }
 }

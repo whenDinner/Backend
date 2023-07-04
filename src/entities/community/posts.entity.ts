@@ -21,13 +21,8 @@ export default class PostsEntity {
 
   // 누가 씀? - uuid
   @ManyToOne(() => AccountEntity, user => user.uuid, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
-  user_uuid: string;
-
-  // 누가 씀? - id
-  @ManyToOne(() => AccountEntity, user => user.login, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
-  user_id: string;
+  @JoinColumn({ name: 'author', referencedColumnName: 'uuid' })
+  author: string;
 
   @Column({ name: 'status', type: 'tinyint', nullable: false, default: 1 })
   status: number

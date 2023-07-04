@@ -21,8 +21,8 @@ export default class CommentsEntity {
 
   // 누가 씀? - uuid
   @ManyToOne(() => AccountEntity, user => user.uuid, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
-  user_uuid: string;
+  @JoinColumn({ name: 'author', referencedColumnName: 'uuid' })
+  author: string;
 
   @ManyToOne(() => CommentsEntity, comment => comment.id, { nullable: true, onDelete: 'CASCADE' })
   @JoinColumn({ name: 'parent_id', referencedColumnName: 'id' })

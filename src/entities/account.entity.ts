@@ -23,8 +23,8 @@ export default class AccountEntity {
   @Column({ name: 'number', type: 'int', nullable: true })
   number?: number | null;
 
-  @Column({ name: 'roomNumber', type: 'varchar', length: 4, nullable: true })
-  roomNumber?: string | null;
+  @Column({ name: 'roomNumber', type: 'int', nullable: true })
+  roomNumber?: number | null;
 
   @Column({ name: 'fullname', type: 'varchar', length: 6, nullable: true })
   fullname: string;
@@ -34,9 +34,14 @@ export default class AccountEntity {
 
   @Column({ name: 'type', type: 'int', nullable: false })
   type: 0 | 1 | 2;
+  
+  // 선택 안함 | 잔류 | 귀가
+  @Column({ name: 'rh', type: 'tinyint', nullable: false, default: false })
+  rh: 0 | 1 | 2;
 
-  @Column({ name: 'isReturn', type: 'tinyint', nullable: false, default: 0 })
-  isReturn: 0 | 1 | 2;
+  // 선택 안함 | 잔류 | 외출 | 외박 | 귀가
+  @Column({ name: 'gs', type: 'tinyint', nullable: true, default: 0 })
+  gs: 0 | 1 | 2 | 3 | 4
 
   @Column({ name: 'isOuting', type: 'boolean', nullable: false, default: false })
   isOuting: boolean;

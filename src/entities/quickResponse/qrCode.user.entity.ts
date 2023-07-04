@@ -12,14 +12,10 @@ export default class QrCodeUserEntity {
   qr_uuid: string;
 
   @ManyToOne(() => AccountEntity, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'user_uuid', referencedColumnName: 'uuid' })
-  user_uuid: string;
+  @JoinColumn({ name: 'author', referencedColumnName: 'uuid' })
+  author: string;
 
   @ManyToOne(() => AccountEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
   user_id: string | AccountEntity;
-
-  @ManyToOne(() => QRCodeEntity, { onDelete: 'CASCADE', onUpdate: 'CASCADE' })
-  @JoinColumn({ name: 'type', referencedColumnName: 'type' })
-  type: string;
 }

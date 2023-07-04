@@ -1,10 +1,7 @@
-import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
-import AccountEntity from "../account.entity";
+import { Column, CreateDateColumn, Entity, ManyToMany, PrimaryGeneratedColumn } from "typeorm";
 import QrCodeUserEntity from "./qrCode.user.entity";
 
-type QRType = "BUS" | "DRM"
-
-@Entity({ name: 'QREntity' })
+@Entity({ name: 'qrCodeEntity' })
 export default class QRCodeEntity {
   @PrimaryGeneratedColumn('uuid')
   uuid: string;
@@ -12,12 +9,12 @@ export default class QRCodeEntity {
   @Column({ name: 'name', type: 'varchar', length: 30, nullable: false, unique: true })
   name: string;
 
-  @Column({ name: 'type', type: 'varchar', length: 6, nullable: false })
-  type: QRType
-
   @Column({ name: 'href', type: 'text', nullable: false })
   href: string;
 
   @ManyToMany(() => QrCodeUserEntity)
   childrens: string | QrCodeUserEntity;
+
+  @CreateDateColumn({ name: 'createAt' })
+  createAt: Date;
 }

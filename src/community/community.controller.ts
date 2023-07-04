@@ -1,34 +1,9 @@
-import { Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Controller, Delete, Get, Post, Req, Res } from '@nestjs/common';
 import { CommunityService } from './community.service';
 
 @Controller('community')
 export class CommunityController {
   constructor(private communityService: CommunityService) {};
-
-  @Post('/comment/post')
-  postComment(@Req() req, @Res() res) {
-    return this.communityService.postComment(req, res);
-  }
-
-  @Post('/comment/reply')
-  replyComment(@Req() request, @Res() response) {
-    return this.communityService.replyComment(request, response);
-  }
-
-  @Post('/post/insert')
-  insertPost(@Req() request, @Res() response) {
-    return this.communityService.insertPost(request, response);
-  }
-
-  @Post('/post/delete')
-  deletePost(@Req() request, @Res() response) {
-    return this.communityService.deletePost(request, response);
-  }
-
-  @Post('/post/update')
-  updatePost(@Req() req, @Res() response) {
-    return this.communityService.updatePost(req, response);
-  }
 
   @Get('/get/posts')
   getPosts(@Req() request, @Res() response) {
@@ -40,4 +15,33 @@ export class CommunityController {
     return this.communityService.getPost(request, response);
   }
 
+  @Post('/post/insert')
+  insertPost(@Req() request, @Res() response) {
+    return this.communityService.insertPost(request, response);
+  }
+
+  @Post('/post/update')
+  updatePost(@Req() req, @Res() response) {
+    return this.communityService.updatePost(req, response);
+  }
+
+  @Delete('/post/delete')
+  deletePost(@Req() request, @Res() response) {
+    return this.communityService.deletePost(request, response);
+  }
+
+  @Post('/comment/insert')
+  insertComment(@Req() req, @Res() res) {
+    return this.communityService.postComment(req, res);
+  }
+  
+  @Post('/comment/reply')
+  replyComment(@Req() req, @Res() res) {
+    return this.communityService.replyComment(req, res);
+  }
+
+  @Delete('/comment/delete')
+  deleteComment(@Req() req, @Res() res) {
+    return this.communityService.deleteComment(req, res);
+  }
 }

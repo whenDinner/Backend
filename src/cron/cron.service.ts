@@ -41,8 +41,10 @@ export class CronService {
         .andWhere('outgo.outgoDate = :outgoDate', { outgoDate: calendar.date })
         .getOne();
 
+      await this.accountRepository.update({ uuid: user.uuid }, { isOuting: false, gs: 0 })
+
       if (!userData) {
-        await this.outgoRepository.insert({ user_uuid: user.uuid, user_id: user.login, outgoDate: calendar.date })
+        await this.outgoRepository.insert({ author: user.uuid, user_id: user.login, outgoDate: calendar.date })
       }
     })
   }

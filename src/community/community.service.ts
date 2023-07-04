@@ -8,7 +8,7 @@ import { IsNull, Repository } from 'typeorm';
 import jsonwebtoken from 'src/utils/jsonwebtoken';
 import { ConfigService } from '@nestjs/config';
 import { Cache } from 'cache-manager';
-import { isValidType } from 'src/utils/typeChecks';
+import { validType } from 'src/utils/typeChecks';
 import { PostType } from 'src/utils/interfaces';
 
 @Injectable()
@@ -35,7 +35,7 @@ export class CommunityService {
       if (!type) throw new Error('type is required')
       if (isNaN(parseInt(limit.toString()))) throw new Error('invalid limit')
       if (isNaN(parseInt(offset.toString()))) throw new Error('invalid offset')
-      if (!isValidType(type, validPostTypes)) throw new Error('invalid type')
+      if (!validType(type, validPostTypes)) throw new Error('invalid type')
     } catch (err) {
       return res.status(400).json({
         success: false,
@@ -52,16 +52,19 @@ export class CommunityService {
         order: {
           id: 'desc'
         },
-        relations: ['user_uuid'],
+        relations: ['author'],
         take: parseInt(limit.toString()),
         skip: parseInt(offset.toString())
       })
 
       const formattedPosts = posts.map((post: any) => {
-        const { user_uuid, ...rest } = post;
+        const { author, ...rest } = post;
         return {
           ...rest,
-          user_id: user_uuid.login,
+          author: {
+            uuid: author.uuid,
+            login: author.login
+          },
         };
       });
 
@@ -82,13 +85,13 @@ export class CommunityService {
     
     const post = await this.postsRepository.findOne({
       where: { id: parseInt(id.toString()) },
-      relations: ['user_uuid']
+      relations: ['author']
     })
 
     const comments = await this.commentsRepository.find({
       where: { target: parseInt(id.toString()), parent_id: IsNull() },
       order: { id: 'desc' },
-      relations: ['user_uuid', 'parent_id', 'childrens', 'childrens.user_uuid', 'childrens.childrens', 'childrens.childrens.user_uuid']
+      relations: ['author', 'parent_id', 'childrens', 'childrens.user_uuid', 'childrens.childrens', 'childrens.childrens.user_uuid']
     })
 
     try {
@@ -102,12 +105,12 @@ export class CommunityService {
       })
     }
 
-    const userId = (post.user_uuid as any).login;
-    const { user_uuid, ...postData } = post;
+    const author = (post.author as any).uuid;
+    const { ...postData } = post;
     
     const formattedPost = {
       ...postData,
-      user_id: userId
+      author
     };
 
     function processReplies(replies: any) {
@@ -131,12 +134,11 @@ export class CommunityService {
     
     
     const formattedComments = comments.map((comment: CommentsEntity | any) => {
-
       const { ...rest } = comment;
       return {
         ...rest,
-        user_uuid: comment.user_uuid.uuid,
-        user_id: comment.user_uuid.login,
+        uuid: comment.author.uuid,
+        login: comment.author.login,
         childrens: comment.childrens ? processReplies(comment.childrens) : []
       };
     });
@@ -164,24 +166,23 @@ export class CommunityService {
     })
 
     try {
-      if (!token) throw new Error('you should token check ( login )')
-      if (!title) throw new Error('title is required')
-      if (!content) throw new Error('content is required')
-      if (!type) throw new Error('type is required')
-      if (!verify.success) throw new Error('invalid token')
-      if (!user) throw new Error('invalid token')
+      if (!token) throw ({ status: 400, message: 'you should token check ( login )' })
+      if (!title) throw ({ status: 400, message: 'title is required' })
+      if (!content) throw ({ status: 400, message: 'content is required'})
+      if (!type) throw ({ status: 400, message: 'type is required'})
+      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
       if (type == '공지') { 
-        if (user.type !== 2) throw new Error('공지사항은 관리자만 쓸 수 있습니다.')
+        if (user.type !== 2) throw ({ status: 401, message: '공지사항은 관리자만 쓸 수 있습니다.'})
       }
     } catch (err) {
-      return res.status(400).json({
+      return res.status(err.status).json({
         success: false,
         message: err.message
       })
     }
 
     try {
-      await this.postsRepository.insert({ title, content, type, user_id: user.login, user_uuid: user.uuid })
+      await this.postsRepository.insert({ title, content, type, author: user.uuid })
       return res.status(200).json({ success: true })
     } catch (err) {
       return res.status(500).json({ 
@@ -201,20 +202,28 @@ export class CommunityService {
     })
 
     const post = await this.postsRepository.findOne({
-      where: { id }
+      where: { id },
+      relations: ['author']
     })
 
+    const author = (post.author as any).uuid;
+    const { ...postData } = post;
+    
+    const formattedPost = {
+      ...postData,
+      author
+    };
+
     try {
-      if (!id) throw new Error('id is required')
-      if (!token) throw new Error('you should token check ( login )')
-      if (!title) throw new Error('title is required')
-      if (!content) throw new Error('content is required')
-      if (!verify.success) throw new Error('invalid token')
-      if (!user) throw new Error('invalid token')
-      if (!post) throw new Error('invalid post')
-      if (post.user_uuid !== user.uuid) throw new Error('invalid post')
+      if (!id) throw ({ status: 400, message: 'id is required'})
+      if (!token) throw ({ status: 400, message: 'you should token check ( login )'})
+      if (!title) throw ({ status: 400, message: 'title is required'})
+      if (!content) throw ({ status: 400, message: 'content is required'})
+      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
+      if (!post) throw ({ status: 400, message: 'invalid post'})
+      if (formattedPost.author !== user.uuid) throw ({ status: 400, message: 'You do not have permission.'})
     } catch (err) {
-      return res.status(400).json({
+      return res.status(err.status).json({
         success: false,
         message: err.message
       })
@@ -244,18 +253,26 @@ export class CommunityService {
     })
 
     const post = await this.postsRepository.findOne({
-      where: { id }
+      where: { id },
+      relations: ['author']
     })
 
+    const author = (post.author as any).uuid;
+    const { ...postData } = post;
+    
+    const formattedPost = {
+      ...postData,
+      author
+    };
+
     try {
-      if (!id) throw new Error('id is required')
-      if (!token) throw new Error('you should token check ( login )')
-      if (!verify.success) throw new Error('invalid token')
-      if (!user) throw new Error('invalid token')
-      if (!post) throw new Error('invalid post')
-      if (post.user_uuid !== user.uuid) throw new Error('invalid post')
+      if (!id) throw ({ status: 400, message:'id is required' })
+      if (!token) throw({ status: 400, message: 'you should token check ( login )'})
+      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
+      if (!post) throw ({ status: 400, message: 'invalid post'})
+      if (formattedPost.author !== user.uuid) throw ({ status: 401, message: 'You do not have permission.' })
     } catch (err) {
-      return res.status(400).json({
+      return res.status(err.status).json({
         success: false,
         message: err.message
       })
@@ -275,7 +292,7 @@ export class CommunityService {
   }
  
   async postComment(req: Request, res: Response) {
-    const { postId, comment } = req.body;
+    const { id, comment } = req.body;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
 
@@ -284,27 +301,26 @@ export class CommunityService {
     })
     
     const post = await this.postsRepository.findOne({
-      where: { id: postId }
+      where: { id }
     })
 
     try {
-      if (!token) throw new Error('you should token check ( login )')
-      if (!postId) throw new Error('postId is required')
-      if (!post) throw new Error('That post doesn\'t exist.')
-      if (!comment) throw new Error('comment is null')
-      if (!verify.success) throw new Error('invalid token')
-      if (!user) throw new Error('invalid token')
+      if (!token) throw ({ status: 400, message: 'you should token check ( login )'})
+      if (!id) throw ({ status: 400, message: 'id is required'})
+      if (!post) throw ({ status: 400, message: 'That post doesn\'t exist.'})
+      if (!comment) throw ({ status: 400, message: 'comment is null'})
+      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
     } catch(err) {
-      return res.status(400).json({
+      return res.status(err.status).json({
         success: false,
         message: err.message
       }) 
     }
     
     try {
-      await this.commentsRepository.insert({ target: postId, comment, type: 'N', user_uuid: user.uuid })
+      await this.commentsRepository.insert({ target: id, comment, type: 'N', author: user.uuid })
       
-      return res.status(200).json({
+      return res.status(201).json({
         success: true
       })
     } catch (err) {
@@ -316,7 +332,7 @@ export class CommunityService {
   }
 
   async replyComment(req: Request, res: Response) {
-    const { commentId, comment } = req.body;
+    const { id, comment } = req.body;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
     
@@ -325,26 +341,73 @@ export class CommunityService {
     })
 
     const commentData = await this.commentsRepository.findOne({
-      where: { id: commentId }
+      where: { id }
     })
 
     try {
-      if (!token) throw new Error('you should token check ( login )')
-      if (!commentId) throw new Error('postId is required')
-      if (!commentData) throw new Error('That comment doesn\'t exist.')
-      if (!comment) throw new Error('comment is null')
-      if (!verify.success) throw new Error('invalid token')
-      if (!user) throw new Error('invalid token')
+      if (!token) throw ({ status: 400, message: 'you should token check ( login )'})
+      if (!id) throw ({ status: 400, message: 'id is required'})
+      if (!commentData) throw ({ status: 400, message: 'That comment doesn\'t exist.'})
+      if (!comment) throw ({ status: 400, message: 'comment is null'})
+      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
     } catch(err) {
-      return res.status(400).json({
+      return res.status(err.status).json({
         success: false,
         message: err.message
       }) 
     }
     
     try {
-      await this.commentsRepository.insert({ target: commentId, comment, type: 'R', user_uuid: user.uuid })
+      await this.commentsRepository.insert({ target: commentData.target, parent_id: id, comment, type: 'R', author: user.uuid })
       
+      return res.status(201).json({
+        success: true
+      })
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server Error'
+      })
+    }
+  }
+
+  async deleteComment(req: Request, res: Response) {
+    const { id } = req.body;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+    
+    const user = await this.accountRepository.findOne({
+      where: { login: verify.data.login }
+    })
+
+    const commentData = await this.commentsRepository.findOne({
+      where: { id },
+      relations: ['author']
+    })
+
+    const author = (commentData.author as any).uuid;
+    const { ...data } = commentData;
+    
+    const formattedComment = {
+      ...data,
+      author
+    };    
+
+    try {
+      if (!id) throw ({ status: 400, message: 'id is required'})
+      if (!commentData) throw ({ status: 400, message: 'That comment doesn\'t exist.'})
+      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token'})
+      if (formattedComment.author === user.uuid) throw ({ status: 401, message: 'You do not have permission.' })
+    } catch(err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      }) 
+    }
+
+    try {
+      await this.accountRepository.delete({ uuid: formattedComment.author })
+
       return res.status(200).json({
         success: true
       })
