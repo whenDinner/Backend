@@ -33,8 +33,8 @@ export class CommunityService {
       if (!offset) throw new Error('offset is required')
       if (!limit) throw new Error('limit is required')
       if (!type) throw new Error('type is required')
-      if (isNaN(parseInt(limit.toString()))) throw new Error('invalid limit')
-      if (isNaN(parseInt(offset.toString()))) throw new Error('invalid offset')
+      if (isNaN(parseInt(limit.toString())) || parseInt(limit.toString()) <= 0) throw new Error('invalid limit')
+      if (isNaN(parseInt(offset.toString())) || parseInt(offset.toString()) < 0) throw new Error('invalid offset')
       if (!validType(type, validPostTypes)) throw new Error('invalid type')
     } catch (err) {
       return res.status(400).json({
@@ -42,6 +42,9 @@ export class CommunityService {
         message: err.message
       })
     }
+
+    const take = parseInt(limit.toString());
+    const skip = parseInt(limit.toString()) * parseInt(offset.toString());
 
     try {
       const posts = await this.postsRepository.find({
@@ -53,8 +56,8 @@ export class CommunityService {
           id: 'desc'
         },
         relations: ['author'],
-        take: parseInt(limit.toString()),
-        skip: parseInt(offset.toString())
+        take,
+        skip
       })
 
       const formattedPosts = posts.map((post: any) => {
@@ -89,8 +92,8 @@ export class CommunityService {
       if (!offset) throw new Error('offset is required')
       if (!limit) throw new Error('limit is required')
       if (!type) throw new Error('type is required')
-      if (isNaN(parseInt(limit.toString()))) throw new Error('invalid limit')
-      if (isNaN(parseInt(offset.toString()))) throw new Error('invalid offset')
+      if (isNaN(parseInt(limit.toString())) || parseInt(limit.toString()) <= 0) throw new Error('invalid limit')
+      if (isNaN(parseInt(offset.toString())) || parseInt(offset.toString()) < 0) throw new Error('invalid offset')
       if (!validType(type, validPostTypes)) throw new Error('invalid type')
     } catch (err) {
       return res.status(400).json({
@@ -103,12 +106,12 @@ export class CommunityService {
       const posts = await this.postsRepository.find({
         where: [
           {
-            title: Like(search.toString()),
+            title: Like(`%${search.toString()}%`),
             status: 1,
             type,
           },
           {
-            content: Like(search.toString()),
+            content: Like(`%${search.toString()}%`),
             status: 1,
             type
           }
@@ -118,7 +121,7 @@ export class CommunityService {
         },
         relations: ['author'],
         take: parseInt(limit.toString()),
-        skip: parseInt(offset.toString())
+        skip: (parseInt(offset.toString())) * parseInt(limit.toString())
       })
 
       const formattedPosts = posts.map((post: any) => {
