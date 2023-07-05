@@ -32,6 +32,11 @@ export class AccountController {
     return this.accountService.getUser(req, res);
   }
 
+  @Get('/search/users')
+  searchUsers(@Req() req, @Res() res) {
+    return this.accountService.searchUsers(req, res);
+  }
+
   @Post('/update/user')
   updateUser(@Req() req, @Res() res) {
     return this.accountService.updateUser(req, res);

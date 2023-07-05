@@ -7,7 +7,7 @@ import { Request, Response } from 'express';
 import AccountEntity from 'src/entities/account.entity';
 import OutgoEntity from 'src/entities/outgo.entity';
 import getRandom from 'src/utils/getRandom';
-import { Between, Repository } from 'typeorm';
+import { Between, Like, Repository } from 'typeorm';
 import jwt from 'src/utils/jsonwebtoken'
 import { verify } from 'jsonwebtoken'
 import { UserToken, oidcToken } from 'src/utils/interfaces';
@@ -158,6 +158,60 @@ export class AccountService {
     }
   }
 
+  async searchUsers(req: Request, res: Response) {
+    const { search, limit, offset } = req.query;
+    const auth = req.headers.authorization.split(' ')[1];
+    const token = verify(auth, this.configService.get('JWT_SECRET')) as UserToken;
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: token.login,
+        type: token.type
+      }
+    })
+
+    const __user = await this.accountRepository.find({
+      where:         
+        { fullname: Like(`%${search}%`)},
+      order: {
+        roomNumber: 'ASC',
+        createdAt: 'DESC',
+      },
+      take: parseInt(limit.toString()),
+      skip: (parseInt(offset.toString())) * parseInt(limit.toString()),
+    });
+
+    const user_cnt = await this.accountRepository.count({
+      where: [
+        { fullname: Like(`%${search}%`)}
+      ],
+      order: {
+        roomNumber: 'ASC',
+        createdAt: 'DESC',
+      },
+    })
+
+    try { 
+      if (!search) throw ({ status: 400, message: '유저의 이름을 입력해주세요.' })
+      if (!offset) throw ({status: 400, message: 'offset is required' })
+      if (!limit) throw ({ status: 400, message: 'limit is required' })
+      if (isNaN(parseInt(limit.toString())) || parseInt(limit.toString()) <= 0) throw ({ status: 400, message: 'invalid limit'})
+      if (isNaN(parseInt(offset.toString())) || parseInt(offset.toString()) < 0) throw ({ status: 400, message: 'invalid offset'})
+      if (!auth || !token || !user || user.type !== 2) throw({ status: 401, message: '비정상적인 토큰 입니다.' });
+      else {
+        return res.status(200).json({
+          success: true,
+          user: __user,
+          user_cnt
+        })
+      }
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+  }
+
   async getUser(req: Request, res: Response) {
     const { uuid } = req.query
     const auth = req.headers.authorization.split(' ')[1];
@@ -210,11 +264,11 @@ export class AccountService {
     try {
       if (!offset) throw ({ status: 400, message: 'offset을 입력해주세요.' })
       else {
-        if (isNaN(parseInt(offset.toString()))) throw ({ status: 400, message: '올바른 offset 값을 입력해주세요.' })
+        if (isNaN(parseInt(offset.toString())) || parseInt(offset.toString()) < 0) throw ({ status: 400, message: '올바른 offset 값을 입력해주세요.' })
       }
       if (!limit) throw ({ status: 400, message: 'limit을 입력해주세요.' })
       else {
-        if (isNaN(parseInt(limit.toString()))) throw ({ status: 400, message: '올바른 limit 값을 입력해주세요.' })
+        if (isNaN(parseInt(limit.toString())) || parseInt(limit.toString()) <= 0) throw ({ status: 400, message: '올바른 limit 값을 입력해주세요.' })
       }
       if (!floor) throw ({ status: 400, message: 'floor를 입력해주세요.' })
       if (!gender) throw ({ status: 400, message: 'gender을 입력해주세요.' })
