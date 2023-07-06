@@ -10,6 +10,21 @@ export class QrcodeController {
     return this.qrcodeService.get(req, res);
   }
 
+  @Get('/getImage')
+  getImage(@Req() req, @Res() res) {
+    return this.qrcodeService.getImage(req, res);
+  }
+
+  @Get('/get/codes')
+  getCodes(@Req() req, @Res() res) {
+    return this.qrcodeService.getCodes(req, res);
+  }
+
+  @Get('/search/codes')
+  searchCodes(@Req() req, @Res() res) {
+    return this.qrcodeService.searchCodes(req, res);
+  }
+
   @Put('/create')
   createQR(@Req() req, @Res() res) {
     return this.qrcodeService.createQR(req, res);
@@ -25,8 +40,18 @@ export class QrcodeController {
     return this.qrcodeService.getInfo(req, res);
   }
 
-  @Post('/access/drm')
-  accessDrm(@Req() req, @Res() res) {
-    return this.qrcodeService.accessDrm(req, res);
+  @Post('/access/PLACE')
+  assDrm(@Req() req, @Res() res) {
+    return this.qrcodeService.accessPlace(req, res);
+  }
+
+  @Post('/access/OUTGO')
+  accessOutgo(@Req() req, @Res() res) {
+    return this.qrcodeService.accessOutgo(req, res);
+  }
+
+  @Post('/access/WRITE')
+  accessWrite(@Req() req, @Res() res) {
+    return this.qrcodeService.accessWrite(req, res);
   }
 }

@@ -23,7 +23,9 @@ import CalendarEntity from './entities/calendar.entity';
 import PostsEntity from './entities/community/posts.entity';
 import CommentsEntity from './entities/community/comments.entity';
 import QRCodeEntity from './entities/quickResponse/qrCode.entity';
-import QrCodeUserEntity from './entities/quickResponse/qrCode.user.entity';
+import QrCodeWriteEntity from './entities/quickResponse/qrCode.write.entity';
+import QrCodeOutgoEntity from './entities/quickResponse/qrCode.outgo.entity';
+import QrCodePlaceEntity from './entities/quickResponse/qrCode.place.entity';
 
 @Module({
   imports: [TypeOrmModule.forRootAsync({
@@ -36,7 +38,7 @@ import QrCodeUserEntity from './entities/quickResponse/qrCode.user.entity';
         username: configService.get('DATABASE_USERNAME'),
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_SCHEMA'),
-        entities: [AccountEntity, CalendarEntity, OutgoEntity, QRCodeEntity, QrCodeUserEntity, CalendarEntity, PostsEntity, CommentsEntity],
+        entities: [AccountEntity, CalendarEntity, OutgoEntity, QRCodeEntity, QrCodeWriteEntity, QrCodeOutgoEntity, QrCodePlaceEntity, CalendarEntity, PostsEntity, CommentsEntity],
         synchronize: configService.get<boolean>('TYPEORM_SYBCHRONIZE')
     })
   }),

@@ -230,6 +230,12 @@ export class AccountService {
       }
     })
 
+    const outgo = await this.outgoRepository
+      .createQueryBuilder('outgo')
+      .leftJoinAndSelect('outgo.author', 'user')
+      .where('outgo.author = :user', { user: uuid.toString() })
+      .getOne()
+
     try {
       if (!uuid) throw ({ status: 400, message: 'uuid를 입력해주세요.' })
       else {
@@ -245,7 +251,8 @@ export class AccountService {
 
     return res.status(200).json({
       success: true,
-      user: search
+      user: search,
+      outgo
     })
   }
 

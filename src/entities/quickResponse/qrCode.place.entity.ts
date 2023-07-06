@@ -1,10 +1,10 @@
-import { Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import AccountEntity from "../account.entity";
 import QRCodeEntity from "./qrCode.entity";
 
-@Entity({ name: 'qrCodeUserEntity' })
-export default class QrCodeUserEntity {
-  @PrimaryGeneratedColumn('identity', { name: 'id' })
+@Entity({ name: 'qrCodePlaceEntity' })
+export default class QrCodePlaceEntity {
+  @PrimaryGeneratedColumn('increment', { name: 'id' })
   id: number;
 
   @ManyToOne(() => QRCodeEntity, { onDelete: 'CASCADE' })
@@ -18,4 +18,7 @@ export default class QrCodeUserEntity {
   @ManyToOne(() => AccountEntity, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'user_id', referencedColumnName: 'login' })
   user_id: string | AccountEntity;
+
+  @CreateDateColumn({ name: 'createdAt' })
+  createdAt: Date;
 }

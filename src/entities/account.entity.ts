@@ -39,9 +39,9 @@ export default class AccountEntity {
   @Column({ name: 'rh', type: 'tinyint', nullable: false, default: false })
   rh: 0 | 1 | 2;
 
-  // 선택 안함 | 잔류 | 외출 | 외박 | 귀가
+  // 잔류 | 외출 | 외박 | 귀가
   @Column({ name: 'gs', type: 'tinyint', nullable: true, default: 0 })
-  gs: 0 | 1 | 2 | 3 | 4
+  gs: 0 | 1 | 2 | 3
 
   @Column({ name: 'isOuting', type: 'boolean', nullable: false, default: false })
   isOuting: boolean;

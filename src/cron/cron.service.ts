@@ -20,12 +20,13 @@ export class CronService {
   ) {};
   
   @Cron(CronExpression.EVERY_MINUTE)
-  async resetOutgo() {
+  async pushOutgo() {
+    const today = new Date();
     const alluser = await this.accountRepository.find();
     
     const calendar = await this.calendarRepository.findOne({
       where: {
-        date: MoreThan(new Date()),
+        date: MoreThan(today),
       },
       order: {
         date: 'ASC',
@@ -34,16 +35,14 @@ export class CronService {
 
     if (!calendar) return
 
-    alluser.map(async(user: AccountEntity, index: number) => {
+    alluser.map(async(user: AccountEntity) => {
       const userData = await this.outgoRepository.createQueryBuilder('outgo')
-        .leftJoinAndSelect('outgo.user_uuid', 'user')
-        .where('outgo.user_uuid = :user', { user: user.uuid })
+        .leftJoinAndSelect('outgo.author', 'user')
+        .where('outgo.author = :user', { user: user.uuid })
         .andWhere('outgo.outgoDate = :outgoDate', { outgoDate: calendar.date })
-        .getOne();
-
-      await this.accountRepository.update({ uuid: user.uuid }, { isOuting: false, gs: 0 })
-
-      if (!userData) {
+        .getOne() as any;
+        
+      if (!userData && user.rh === 1 && user.type === 0) {
         await this.outgoRepository.insert({ author: user.uuid, user_id: user.login, outgoDate: calendar.date })
       }
     })

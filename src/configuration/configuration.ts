@@ -14,5 +14,6 @@ export default () => ({
   GBSW_REDIRECT_URI: process.env.GBSW_REDIRECT_URI,
   GBSW_SCOPES: process.env.GBSW_SCOPES,
   GBSW_PUBKEY_URL: process.env.GBSW_PUBKEY_URL,
-  GBSW_ISSUER: process.env.GBSW_ISSUER
+  GBSW_ISSUER: process.env.GBSW_ISSUER,
+  BASE_URL: process.env.BASE_URL
 })
