@@ -117,6 +117,10 @@ export class OutgoService {
       await this.accountRepository.update({ uuid: user.uuid }, {
         rh
       })
+
+      return res.status(200).json({
+        success: true
+      })
     } catch (err) {
       return res.status(500).json({
         success: false,
