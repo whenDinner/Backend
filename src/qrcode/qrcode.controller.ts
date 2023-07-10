@@ -20,6 +20,11 @@ export class QrcodeController {
     return this.qrcodeService.getCodes(req, res);
   }
 
+  @Get('/get/place')
+  getPlace(@Req() req, @Res() res) {
+    return this.qrcodeService.getPlace(req, res);
+  }
+
   @Get('/search/codes')
   searchCodes(@Req() req, @Res() res) {
     return this.qrcodeService.searchCodes(req, res);
@@ -38,6 +43,16 @@ export class QrcodeController {
   @Post('/getInfo')
   accessQR(@Req() req, @Res() res) {
     return this.qrcodeService.getInfo(req, res);
+  }
+
+  @Get('/access/get')
+  accessGet(@Req() req, @Res() res) {
+    return this.qrcodeService.getAccess(req, res); 
+  }
+
+  @Delete('/access/clear')
+  accessClear(@Req() req, @Res() res) {
+    return this.qrcodeService.clearAccess(req, res);
   }
 
   @Post('/access/PLACE')

@@ -19,6 +19,11 @@ export class OutgoController {
     return this.outgoService.updateCalendar(req, res, file);
   }
 
+  @Post('/set/rh')
+  updateRh(@Req() req, @Res() res) {
+    return this.outgoService.updateRh(req, res);
+  }
+
   @Get('/get/calendars')
   getCalendars(@Req() req, @Res() res) {
     return this.outgoService.getCalendars(req, res);

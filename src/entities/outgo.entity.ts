@@ -1,4 +1,4 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import AccountEntity from "./account.entity";
 
 @Entity({ name: 'outgoEntity' })
@@ -37,4 +37,7 @@ export default class OutgoEntity {
 
   @CreateDateColumn({ name: "createdAt", nullable: false })
   createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updatedAt', nullable: true })
+  updatedAt: Date | null | undefined;
 }

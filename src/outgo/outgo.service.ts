@@ -89,6 +89,42 @@ export class OutgoService {
     })
   }
 
+  async updateRh(req: Request, res: Response) {
+    const { rh } = req.body;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: verify.data.login
+      }
+    }) 
+
+    try {
+      if (!rh) throw ({ status: 400, message: "rh를 입력해주세요." })
+      else {
+        if (!validType<0 | 1 | 2>(rh, [0, 1, 2]) || rh === 0) throw ({ status: 400, message: '정상적인 rh 값을 입력해주세요.' })
+      }
+      if (!token || !verify.success || !user) throw ({ status: 401, message: '비 정상적인 토큰 입니다.' })
+    } catch (err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    try {
+      await this.accountRepository.update({ uuid: user.uuid }, {
+        rh
+      })
+    } catch (err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server Error'
+      })
+    }
+  }
+
   async setOutgo(req: Request, res: Response) {
     const { dotw, type, reason } = req.body;
 
@@ -104,7 +140,7 @@ export class OutgoService {
 
     try {
       if (!type) throw ({ status: 400, message: 'required type' })
-      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
+      if (!token || !verify.success || !user) throw ({ status: 400, message: '비 정상적인 토큰 입니다.' })
       if (!validType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
       if (!validType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
       if (user.gs === 3 || user.rh == 2) throw ({ status: 400, message: '귀가하는 학생들은 외출/외박을 신청할 수 없습니다.' })

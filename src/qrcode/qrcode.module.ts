@@ -9,9 +9,10 @@ import CalendarEntity from 'src/entities/calendar.entity';
 import QrCodeWriteEntity from 'src/entities/quickResponse/qrCode.write.entity';
 import QrCodeOutgoEntity from 'src/entities/quickResponse/qrCode.outgo.entity';
 import QrCodePlaceEntity from 'src/entities/quickResponse/qrCode.place.entity';
+import OutgoEntity from 'src/entities/outgo.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AccountEntity, QRCodeEntity, QrCodeWriteEntity, QrCodeOutgoEntity, QrCodePlaceEntity, CalendarEntity]),
+  imports: [TypeOrmModule.forFeature([AccountEntity, QRCodeEntity, QrCodeWriteEntity, QrCodeOutgoEntity, QrCodePlaceEntity, CalendarEntity, OutgoEntity]),
     RedisModule
   ],
   exports: [TypeOrmModule],

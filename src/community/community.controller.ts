@@ -20,6 +20,11 @@ export class CommunityController {
     return this.communityService.searchPosts(request, response);
   }
 
+  @Get('/category/info')
+  getCategoryInfo(@Req() request, @Res() response) {
+    return this.communityService.getCategoryInfo(request, response);
+  }
+
   @Post('/post/insert')
   insertPost(@Req() request, @Res() response) {
     return this.communityService.insertPost(request, response);

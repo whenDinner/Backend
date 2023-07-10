@@ -60,20 +60,31 @@ export class CommunityService {
         skip
       })
 
+      const posts_cnt = await this.postsRepository.count({
+        where: {
+          status: 1,
+          type
+        },
+        order: {
+          id: 'desc'
+        }
+      })
+
       const formattedPosts = posts.map((post: any) => {
         const { author, ...rest } = post;
         return {
           ...rest,
           author: {
-            uuid: author.uuid,
-            login: author.login
+            uuid: type !== "익명 게시판" ? author.uuid : "익명",
+            login: type !== "익명 게시판" ? author.login : "익명"
           },
         };
       });
 
       return res.status(200).json({
         success: true,
-        posts: formattedPosts
+        posts: formattedPosts,
+        posts_cnt
       })
     } catch (err) {
       return res.status(500).json({
@@ -81,6 +92,98 @@ export class CommunityService {
         message: 'Server Error'
       })
     }
+  }
+
+  async getCategoryInfo(req: Request, res: Response) {
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: verify.data.login
+      }
+    })
+
+    try {
+      if (!token || !verify.success || !user) throw ({ status: 401, message: '비정상적인 토큰 입니다.' })
+    } catch(err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    const info = []
+
+    const noticeCount = await this.postsRepository.count({
+      where: {
+        type: '공지',
+        status: 1
+      }
+    })
+
+    const postCount = await this.postsRepository.count({
+      where: {
+        type: '게시글',
+        status: 1
+      }
+    })
+
+    const alterationCount = await this.postsRepository.count({
+      where: {
+        type: "분실물",
+        status: 1
+      }
+    }) 
+
+    const SuggestionCount = await this.postsRepository.count({
+      where: {
+        type: "건의사항",
+        status: 1
+      }
+    }) 
+
+    const AnonymousCount = await this.postsRepository.count({
+      where: {
+        type: "익명 게시판",
+        status: 1
+      }
+    }) 
+
+    info.push({
+      label: "공지사항",
+      value: "공지",
+      count: noticeCount
+    })
+
+    info.push({
+      label: "게시글",
+      value: "게시글",
+      count: postCount
+    })
+
+    info.push({
+      label: "분실물",
+      value: "분실물",
+      count: alterationCount
+    })
+
+    info.push({
+      label: "건의사항",
+      value: "건의사항",
+      count: SuggestionCount
+    })
+
+    info.push({
+      label: "익명 게시판",
+      value: "익명 게시판",
+      count: AnonymousCount
+    })
+
+    return res.status(201).json({
+      success: true,
+      info
+    })
   }
 
   async searchPosts(req: Request, res: Response) {
@@ -129,8 +232,8 @@ export class CommunityService {
         return {
           ...rest,
           author: {
-            uuid: author.uuid,
-            login: author.login
+            uuid: type !== "익명 게시판" ? author.uuid : "익명",
+            login: type !== "익명 게시판" ? author.login : "익명"
           },
         };
       });
@@ -158,7 +261,7 @@ export class CommunityService {
     const comments = await this.commentsRepository.find({
       where: { target: parseInt(id.toString()), parent_id: IsNull() },
       order: { id: 'desc' },
-      relations: ['author', 'parent_id', 'childrens', 'childrens.user_uuid', 'childrens.childrens', 'childrens.childrens.user_uuid']
+      relations: ['author', 'parent_id', 'childrens', 'childrens.author', 'childrens.childrens', 'childrens.childrens.author']
     })
 
     try {
@@ -172,12 +275,15 @@ export class CommunityService {
       })
     }
 
-    const author = (post.author as any).uuid;
+    const author = post.author as any;
     const { ...postData } = post;
     
     const formattedPost = {
       ...postData,
-      author
+      author: {
+        uuid: post.type !== "익명 게시판" ? author.uuid : "익명",
+        login: post.type !== "익명 게시판" ? author.login : "익명"
+      }
     };
 
     function processReplies(replies: any) {
@@ -189,8 +295,8 @@ export class CommunityService {
           id: reply.id,
           target: reply.target,
           type: reply.type,
-          user_uuid: reply.user_uuid.uuid,
-          user_id: reply.user_uuid.login,
+          author: reply.author.uuid,
+          user_id: reply.author.login,
           createdAt: reply.createdAt,
           childrens: reply.childrens ? processReplies(reply.childrens) : [], // 재귀 사용
         });
@@ -213,7 +319,8 @@ export class CommunityService {
     try {
       return res.status(200).json({
         success: true,
-        post: formattedPost, comments: formattedComments
+        post: formattedPost, 
+        comments: post.type === "익명 게시판" ? "공지사항, 익명게시판에는 댓글을 달 수 없습니다." : formattedComments
       })
     } catch (err) {
       return res.status(500).json({
@@ -372,11 +479,13 @@ export class CommunityService {
     })
 
     try {
-      if (!token) throw ({ status: 400, message: 'you should token check ( login )'})
+      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token'})
       if (!id) throw ({ status: 400, message: 'id is required'})
-      if (!post) throw ({ status: 400, message: 'That post doesn\'t exist.'})
       if (!comment) throw ({ status: 400, message: 'comment is null'})
-      if (!verify.success || !user) throw ({ status: 400, message: 'invalid token'})
+      if (!post) throw ({ status: 400, message: 'That post doesn\'t exist.'})
+      else {
+        if (post.type === "익명 게시판" || post.type === "공지") throw ({ status: 400, message: '공지사항, 익명게시판에는 댓글을 달 수 없습니다.' })
+      }
     } catch(err) {
       return res.status(err.status).json({
         success: false,
@@ -473,7 +582,7 @@ export class CommunityService {
     }
 
     try {
-      await this.accountRepository.delete({ uuid: formattedComment.author })
+      await this.commentsRepository.delete({ id })
 
       return res.status(200).json({
         success: true

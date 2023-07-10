@@ -11,7 +11,7 @@ import CalendarEntity from 'src/entities/calendar.entity';
 import QrCodeWriteEntity from 'src/entities/quickResponse/qrCode.write.entity';
 import QrCodeOutgoEntity from 'src/entities/quickResponse/qrCode.outgo.entity';
 import QrCodePlaceEntity from 'src/entities/quickResponse/qrCode.place.entity';
-import moment from 'moment';
+import OutgoEntity from 'src/entities/outgo.entity';
 
 @Injectable()
 export class QrcodeService {
@@ -28,6 +28,8 @@ export class QrcodeService {
     private qrCodePlaceRepository: Repository<QrCodePlaceEntity>,
     @InjectRepository(CalendarEntity)
     private calendarRepository: Repository<CalendarEntity>,
+    @InjectRepository(OutgoEntity)
+    private outgoRepository: Repository<OutgoEntity>,
     private configService: ConfigService
   ) {};
 
@@ -191,6 +193,54 @@ export class QrcodeService {
     })
   }
 
+  async getPlace(req: Request, res: Response) {
+    const { limit, offset } = req.query
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: verify.data.login,
+        type: verify.data.type
+      }
+    })
+
+    try {
+      if (!token || !verify.success || !user) throw ({ status: 400, message: '비 정상적인 토큰 입니다.' })
+    } catch (err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    const take = parseInt(limit.toString());
+    const skip = parseInt(limit.toString()) * parseInt(offset.toString());
+
+    const codes = await this.qrCodeRepository.find({
+      where:{
+        action: 'PLACE'
+      },
+      order: {
+        createAt: 'desc'
+      },
+      take,
+      skip
+    })
+
+    const codes_cnt = await this.qrCodeRepository.count({
+      order: {
+        createAt: 'desc'
+      }
+    })
+
+    return res.status(200).json({
+      success: true,
+      codes,
+      codes_cnt
+    })
+  }
+
   async getInfo(req: Request, res: Response) {
     const uuid = req.body.uuid;
     const token = req.headers.authorization.split(' ')[1];
@@ -219,6 +269,33 @@ export class QrcodeService {
       })
     }
 
+    let count = 0;
+
+    switch (QR.action) {
+      case "OUTGO":
+        count = await this.qrCodeOutgoRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .orWhere('qr_uuid = "-1"')
+          .getCount()
+          break;
+      case "PLACE":
+        count = await this.qrCodePlaceRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .getCount()
+          break;
+      case "WRITE":
+        count = await this.qrCodeWriteRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .getCount()
+          break;
+    }
+
     return res.status(200).json({
       success: true,
       message: '',
@@ -226,7 +303,8 @@ export class QrcodeService {
         uuid: QR.uuid,
         name: QR.name,
         action: QR.action,
-        createdAt: QR.createAt
+        createdAt: QR.createAt,
+        count
       }
     })
   }
@@ -312,34 +390,20 @@ export class QrcodeService {
     const uuid = req.body.uuid;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
-
+    
     const user = await this.accountRepository.findOne({
       where: { login: verify.data.login }
     })
     
     const QR = await this.qrCodeRepository.findOne({
-      where: {
-        uuid
-      }
+      where: { uuid, action: 'OUTGO' }
     })
-
-    const startDate = new Date();
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    
-
-    const calendar = await this.calendarRepository
-      .createQueryBuilder('calendar')
-      .where('calendar.date BETWEEN :startDate AND :nextWeek', { startDate, nextWeek })
-      .orderBy('calendar.date', 'ASC')
-      .getOne();
 
     try {
       if (!uuid) throw ({ status: 400, message: 'name을 입력해주세요.' })
       else {
         if (!QR) throw({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
       }
-      if (!calendar) throw ({ status: 400, message: 'outgo를 실시하는 날이 아닙니다.' })
       if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
     } catch(err) {
       return res.status(err.status).json({
@@ -348,29 +412,33 @@ export class QrcodeService {
       })
     }
 
-    const qrUser = await this.qrCodeOutgoRepository
+    const user_qr = await this.qrCodeOutgoRepository
       .createQueryBuilder('qrCodeOutgo')
       .leftJoinAndSelect('qrCodeOutgo.author', 'user')
-      .where('qrCodeOutgo.author = :user', { user: user.uuid })
-      .orderBy('qrCodeOutgo.createdAt', 'DESC')
+      .where('author = :uuid AND qr_uuid = "-1"', { uuid: user.uuid })
+      .orWhere('author = :uuid AND qr_uuid = :QR', { uuid: user.uuid, QR: QR.uuid })
       .getOne()
 
-    if (!qrUser) {
-      await this.qrCodeOutgoRepository.insert({
-        qr_uuid: QR.uuid ? QR.uuid : null,
-        author: user.uuid,
-        user_id: user.login
-      })
+    if (!user_qr) {
+      const data = await this.outgoRepository
+        .createQueryBuilder('outgoEntity')
+        .where('outgoEntity.author = :uuid', { uuid: user.uuid })
+        .getOne()
 
-      await this.accountRepository.update({ uuid: user.uuid }, { isOuting: true })
+      if (data && (data.sat_pm || data.sun || data.sun_am || data.sun_pm) && user.type < 1) {
+        await this.qrCodeOutgoRepository.insert({ 
+          qr_uuid: QR.uuid, 
+          author: user.uuid, 
+          user_id: user.login 
+        })
+      } else return res.status(401).json({
+        success: false,
+        message: '외출 요청을 하지 않으셔서 외출을 허가 할 수 없습니다.'
+      })
     } else {
       await this.qrCodeOutgoRepository.delete({
-        qr_uuid: QR.uuid ? QR.uuid : null,
-        author: user.uuid,
-        user_id: user.login
+        author: user.uuid
       })
-
-      await this.accountRepository.update({ uuid: user.uuid }, { isOuting: false })
     }
 
     return res.status(200).json({
@@ -389,16 +457,17 @@ export class QrcodeService {
     
     const QR = await this.qrCodeRepository.findOne({
       where: {
-        uuid
+        uuid,
+        action: 'PLACE'
       }
     })
 
     try {
-      if (!uuid) throw ({ status: 400, message: 'uuid를 입력해주세요.' })
+      if (!uuid) throw ({ status: 400, message: 'name을 입력해주세요.' })
       else {
         if (!QR) throw({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
       }
-      if (!token || !verify || !user) throw ({ status: 400, message: 'invalid token' })
+      if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
     } catch(err) {
       return res.status(err.status).json({
         success: false,
@@ -406,12 +475,18 @@ export class QrcodeService {
       })
     }
 
+    const date = new Date();
+
+    const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0); // 오늘의 00시 00분 00초
+    const endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59); // 오늘의 23시 59분 59초
+    
     const qrUser = await this.qrCodePlaceRepository
       .createQueryBuilder('quickResponse')
       .where('quickResponse.qr_uuid = :uuid', { uuid: QR.uuid })
       .andWhere('quickResponse.author = :author', { author: user.uuid })
+      .andWhere('quickResponse.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate })
       .getOne()
-    
+
     if (!qrUser) {
       await this.qrCodePlaceRepository.insert({
         qr_uuid: QR.uuid,
@@ -442,7 +517,8 @@ export class QrcodeService {
     
     const QR = await this.qrCodeRepository.findOne({
       where: {
-        uuid
+        uuid,
+        action: 'WRITE'
       }
     })
 
@@ -459,34 +535,174 @@ export class QrcodeService {
       })
     }
 
-    const date = new Date();
-
-    const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0, 0, 0); // 오늘의 00시 00분 00초
-    const endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59); // 오늘의 23시 59분 59초
-    
-    const qrUser = await this.qrCodeWriteRepository
-      .createQueryBuilder('quickResponse')
-      .where('quickResponse.qr_uuid = :uuid', { uuid: QR.uuid })
-      .andWhere('quickResponse.author = :author', { author: user.uuid })
-      .andWhere('quickResponse.createdAt BETWEEN :startDate AND :endDate', { startDate, endDate })
-      .getOne()
-
-    if (!qrUser) {
-      await this.qrCodeWriteRepository.insert({
-        qr_uuid: QR.uuid,
-        author: user.uuid,
-        user_id: user.login
-      })
-    } else {
-      await this.qrCodeWriteRepository.delete({
-        qr_uuid: QR.uuid,
-        author: user.uuid,
-        user_id: user.login
-      })
-    }
+    await this.qrCodeWriteRepository.insert({
+      qr_uuid: QR.uuid,
+      author: user.uuid,
+      user_id: user.login
+    })
 
     return res.status(200).json({
       success: true
     })
+  }
+
+  async getAccess(req: Request, res: Response) {
+    const { uuid, limit, offset } = req.query;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        uuid: uuid.toString()
+      }
+    })
+
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: verify.data.login
+      }
+    })
+
+    try {
+      if (!uuid) throw ({ status: 400, message: 'uuid를 입력해주세요.' })
+      if (!limit) throw ({ status: 400, message: 'limit을 입력해주세요.' })
+      if (!offset) throw ({ status: 400, message: 'offset을 입력해주세요.' })
+      if (!QR) throw ({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+      if (!token || !verify.success || !user || user.type == 1) throw ({ status: 401, message: '데이터를 열람할 권한이 없습니다.' })
+    } catch (err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    let users = undefined;
+    let users_cnt = undefined;
+
+    switch (QR.action) {
+      case "OUTGO":
+        users = await this.qrCodeOutgoRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .orWhere('qr_uuid = "-1"')
+          .limit(parseInt(limit.toString()))
+          .offset(parseInt(offset.toString()))
+          .orderBy('QuickResponse.createdAt', 'DESC')
+          .getMany()
+
+        users_cnt = await this.qrCodeOutgoRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .orWhere('qr_uuid = "-1"')
+          .getCount()
+          break;
+      case "PLACE":
+        users = await this.qrCodePlaceRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .limit(parseInt(limit.toString()))
+          .offset(parseInt(offset.toString()))
+          .orderBy('QuickResponse.createdAt', 'DESC')
+          .getMany()
+
+        users_cnt = await this.qrCodePlaceRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .getCount()
+          break;
+      case "WRITE":
+        const date = new Date();
+        users = await this.qrCodeWriteRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .limit(parseInt(limit.toString()))
+          .offset(parseInt(offset.toString()))
+          .orderBy('QuickResponse.createdAt', 'DESC')
+          .getMany()
+
+        users_cnt = await this.qrCodeWriteRepository
+          .createQueryBuilder('QuickResponse')
+          .leftJoinAndSelect('QuickResponse.author', 'user')
+          .where('qr_uuid = :uuid', { uuid: QR.uuid })
+          .getCount()
+          break;
+    }
+
+    return res.status(200).json({
+      success: true,
+      users,
+      users_cnt
+    })
+  }
+
+  async clearAccess(req: Request, res: Response) {
+    const { uuid, action } = req.body;
+    const token = req.headers.authorization.split(' ')[1];
+    const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'))
+
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        uuid,
+        action
+      }
+    })
+
+    const user = await this.accountRepository.findOne({
+      where: {
+        login: verify.data.login
+      }
+    })
+
+    try {
+      if (!uuid) throw ({ status: 400, message: 'uuid를 입력해주세요.' })
+      if (!QR) throw ({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+      if (!token || !verify.success || !user || user.type !== 2) throw ({ status: 401, message: '데이터를 삭제할 권한이 없습니다.' })
+    } catch (err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+    
+    try {
+      switch (QR.action) {
+        case "OUTGO":
+          await this.qrCodeOutgoRepository
+            .createQueryBuilder('qrCodeOutgoEntity')
+            .delete()
+            .where('qrCodeOutgoEntity.qr_uuid = :uuid', { uuid: QR.uuid })
+            .orWhere('qrCodeOutgoEntity.qr_uuid = "-1"')
+            .execute()
+          break;
+        case "PLACE":
+          await this.qrCodePlaceRepository
+            .createQueryBuilder('qrCodePlaceEntity')
+            .delete()
+            .where('qrCodePlaceEntity.qr_uuid = :uuid', { uuid: QR.uuid })
+            .execute()
+          break;
+        case "WRITE":
+          await this.qrCodeWriteRepository
+            .createQueryBuilder('qrCodeWriteEntity')
+            .delete()
+            .where('qrCodeWriteEntity.qr_uuid = :uuid', { uuid: QR.uuid })
+            .execute()
+          break;
+      }
+
+      return res.status(200).json({
+        success: true
+      })
+    } catch(err) {
+      return res.status(500).json({
+        success: false,
+        message: 'Server Error'
+      })
+    }
   }
 }
