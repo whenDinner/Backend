@@ -352,22 +352,29 @@ export class QrcodeService {
       if (!action) throw ({ status: 400, message: 'action을 입력해주세요.' })
       if (QR) throw ({ status: 400, message: '이미 있는 Quick Response 코드 입니다.' })
       if (!token || !verify.success || !user) throw ({ status: 400, message: 'invalid token' })
+      
+      await this.qrCodeRepository.insert({
+        name,
+        action
+      })
+
+      const create = await this.qrCodeRepository.findOne({
+        where: {
+          name,
+          action
+        }
+      })
+  
+      return res.status(201).json({
+        success: true,
+        uuid: create.uuid
+      })
     } catch(err) {
       return res.status(err.status).json({
         success: false,
         message: err.message
       })
     }
-
-    const insertQr = await this.qrCodeRepository.insert({
-      name,
-      action
-    })
-
-    return res.status(201).json({
-      success: true,
-      uuid: insertQr.identifiers[0].uuid
-    })
   }
 
   async deleteQR(req: Request, res: Response) {
@@ -444,7 +451,13 @@ export class QrcodeService {
         .where('outgoEntity.author = :uuid', { uuid: user.uuid })
         .getOne()
 
-      if (data && (data.sat_pm || data.sun || data.sun_am || data.sun_pm) && user.type < 1) {
+      const date = new Date()
+
+      const daysOfWeek = ['일', '월', '화', '수', '목', '금', '토'];
+      const dayOfWeek = daysOfWeek[date.getDay()];
+      let amPm = date.getHours() < 12 ? "am" : "pm"
+      
+      if (data && ((data.sat_pm && dayOfWeek === "토" && amPm === "pm") || (data.sun && dayOfWeek === "일") || (data.sun_am && dayOfWeek === "일" && amPm === "am") || (data.sun_pm && dayOfWeek === "일" && amPm === "pm")) && user.type < 1) {
         await this.qrCodeOutgoRepository.insert({ 
           qr_uuid: QR.uuid, 
           author: user.uuid, 
