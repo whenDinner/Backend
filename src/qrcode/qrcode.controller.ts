@@ -40,7 +40,7 @@ export class QrcodeController {
     return this.qrcodeService.deleteQR(req, res);
   }
 
-  @Post('/getInfo')
+  @Get('/getInfo')
   accessQR(@Req() req, @Res() res) {
     return this.qrcodeService.getInfo(req, res);
   }
