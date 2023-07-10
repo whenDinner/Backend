@@ -88,7 +88,27 @@ export class QrcodeService {
   }
 
   async getImage(req: Request, res: Response) {
+    const { uuid } = req.query;
 
+    const QR = await this.qrCodeRepository.findOne({
+      where: {
+        uuid: uuid.toString()
+      }
+    })
+
+    try {
+      if (!uuid) throw ({ status: 400, message: 'uuid를 입력해주세요.' })
+      if (!QR) throw ({ status: 400, message: '존재하지 않는 Quick Response 코드 입니다.' })
+    } catch (err) {
+      return res.status(err.status).json({
+        success: false,
+        message: err.message
+      })
+    }
+
+    const base64 = await toDataURL(`${QR.action}_${QR.uuid}`)
+
+    return res.send(`<img src=${base64} />`)
   }
 
   async searchCodes(req: Request, res: Response) {
@@ -242,7 +262,7 @@ export class QrcodeService {
   }
 
   async getInfo(req: Request, res: Response) {
-    const uuid = req.body.uuid;
+    const uuid = req.query.uuid;
     const token = req.headers.authorization.split(' ')[1];
     const verify = jsonwebtoken.verify(token, this.configService.get('JWT_SECRET'));
 
@@ -252,7 +272,7 @@ export class QrcodeService {
     
     const QR = await this.qrCodeRepository.findOne({
       where: {
-        uuid
+        uuid: uuid.toString()
       }
     })
 
@@ -298,7 +318,6 @@ export class QrcodeService {
 
     return res.status(200).json({
       success: true,
-      message: '',
       QuickResponse: {
         uuid: QR.uuid,
         name: QR.name,
