@@ -98,7 +98,30 @@ parameters: (\*) = required
 }
 ```
 
-## ***GET*** `/update/user`
+## ***GET*** `/search/users`
+#### \# 로그인을 안하면 사용을 할 수 없음.
+parameters: (*) = required
+```
+  Headers -> Authorization: Bearer(*)
+  query -> search(*), limit(*), offset(*)
+```
+### `failure`:
+```json
+{
+  "success": false,
+  "message": err.message
+}
+```
+### `success`:
+```json
+{
+  "success": true,
+  "user": user.data,
+  "user_cnt": user.count
+}
+```
+
+## ***POST*** `/update/user`
 #### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (*) = required
 ```
