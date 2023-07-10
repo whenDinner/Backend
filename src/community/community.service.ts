@@ -227,6 +227,25 @@ export class CommunityService {
         skip: (parseInt(offset.toString())) * parseInt(limit.toString())
       })
 
+      const posts_cnt = await this.postsRepository.count({
+        where: [
+          {
+            title: Like(`%${search.toString()}%`),
+            status: 1,
+            type,
+          },
+          {
+            content: Like(`%${search.toString()}%`),
+            status: 1,
+            type
+          }
+        ],
+        order: {
+          id: 'desc'
+        },
+        relations: ['author']
+      })
+
       const formattedPosts = posts.map((post: any) => {
         const { author, ...rest } = post;
         return {
@@ -240,7 +259,8 @@ export class CommunityService {
 
       return res.status(200).json({
         success: true,
-        posts: formattedPosts
+        posts: formattedPosts,
+        posts_cnt
       })
     } catch (err) {
       return res.status(500).json({
