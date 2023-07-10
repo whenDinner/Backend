@@ -17,7 +17,8 @@ parameters: (\*) = required
 ```json
 {
   "success": true,
-  "posts": Posts.data
+  "posts": Posts.data,
+  "posts_cnt": Posts.count
 }
 ```
 
@@ -43,7 +44,52 @@ parameters: (\*) = required
 }
 ```
 
-## ***POST*** `/get/insert`
+## ***GET*** `/search/posts`
+parameters: (\*) = required
+```
+  query -> offset(*), limit(*), type(*), search(*)
+```
+
+### `failure`:
+```json
+{
+  "success": false,
+  "message": err.message
+}
+```
+### `success`:
+```json
+{
+  "success": true,
+  "post": Post.data,
+  "posts_cnt": Posts.count
+}
+```
+
+## ***GET*** `/category/info`
+#### \# 로그인을 안하면 사용을 할 수 없음.
+
+### `failure`:
+```json
+{
+  "success": false,
+  "message": err.message
+}
+```
+### `success`:
+```json
+{
+  "success": true,
+  "info": {
+    label: string,
+    value: string,
+    count: number
+  }[]
+}
+```
+
+## ***POST*** `/post/insert`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> title(*), content(*), type(*)
@@ -64,7 +110,8 @@ parameters: (\*) = required
 }
 ```
 
-## ***POST*** `/get/update`
+## ***POST*** `/post/update`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> title(*), content(*), id(*)
@@ -85,7 +132,8 @@ parameters: (\*) = required
 }
 ```
 
-## ***DELETE*** `/get/delete`
+## ***DELETE*** `/post/delete`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> id(*)
@@ -107,6 +155,7 @@ parameters: (\*) = required
 ```
 
 ## ***POST*** `/comment/insert`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> id(*), comment(*)
@@ -128,6 +177,7 @@ parameters: (\*) = required
 ```
 
 ## ***POST*** `/comment/reply`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> id(*), comment(*)
@@ -149,6 +199,7 @@ parameters: (\*) = required
 ```
 
 ## ***DELETE*** `/comment/delete`
+#### \# 로그인을 안하면 사용을 할 수 없음.
 parameters: (\*) = required
 ```
   body -> id(*)
