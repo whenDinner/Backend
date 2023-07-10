@@ -143,15 +143,17 @@ export class OutgoService {
     })
 
     try {
+      if (!dotw) throw ({ status: 400, message: 'required dotw' })
       if (!type) throw ({ status: 400, message: 'required type' })
       if (!token || !verify.success || !user) throw ({ status: 400, message: '비 정상적인 토큰 입니다.' })
       if (!validType(dotw, validDotwType)) throw ({ status: 400, message: 'invalid dotwType' })
       if (!validType(type, validOutgoType)) throw ({ status: 400, message: 'invalid outgoType' })
       if (user.gs === 3 || user.rh == 2) throw ({ status: 400, message: '귀가하는 학생들은 외출/외박을 신청할 수 없습니다.' })
-      if ((dotw === '금' || dotw === '토') && type !== '외박') throw ({ status: 400, message: '금요일, 토요일 외박 이외엔 다른것 선택 불가' });
+      if (dotw === '금' && type.includes('외출')) throw ({ status: 400, message: '금요일엔 외출 불가' })
       if (dotw === '토' && type === '오전외출') throw ({ status: 400, message: '토요일엔 오전외출 불가' });
       if (dotw === '일' && type === '외박') throw ({ status: 400, message: '일요일엔 외박 불가' })
     } catch(err) {
+      console.log(err.message)
       return res.status(err.status).json({
         success: false,
         message: err.message
@@ -171,20 +173,20 @@ export class OutgoService {
       if (!calendar) throw({ status: 500, message: '더이상의 잔류, 귀가 표가 없습니다. 관리자에게 문의해주세요' })
       
       if (type.includes('외출'))
-        await this.accountRepository.update({ login: verify.data.login }, { gs: 2 })
+        await this.accountRepository.update({ uuid: user.uuid }, { gs: 1 })
       else {
-        await this.accountRepository.update({ login: verify.data.login }, { gs: 3 })
+        await this.accountRepository.update({ uuid: user.uuid }, { gs: 2 })
       }
 
-      const userAnswer = await this.outgoRepository.findOne({
-        where: {
-          outgoDate: calendar.date,
-          user_id: user.uuid
-        }
-      })
+      const userAnswer = await this.outgoRepository
+        .createQueryBuilder('outgoEntity')
+        .leftJoinAndSelect('outgoEntity.author', 'user')
+        .where('outgoDate = :date', { date: calendar.date })
+        .andWhere('outgoEntity.author = :uuid', { uuid: user.uuid })
+        .getOne()
 
       if (userAnswer) {
-        await this.outgoRepository.update({user_id: userAnswer.user_id}, {
+        await this.outgoRepository.update({author: userAnswer.author}, {
           fri_out: dotw === "금" ? true : false,
           sat_pm: dotw === "토" && (type === "오후외출" || type === "외박") ? true : false,
           sun_am: dotw === "일" && type === "오전외출" ? true : false,
@@ -194,13 +196,15 @@ export class OutgoService {
         })
       } else {
         await this.outgoRepository.insert({
-          user_id: user.uuid,
+          author: user.uuid,
+          user_id: user.login,
           fri_out: dotw === "금" ? true : false,
           sat_pm: dotw === "토" && (type === "오후외출" || type === "외박") ? true : false,
           sun_am: dotw === "일" && type === "오전외출" ? true : false,
           sun_pm: dotw === "일" && type === "오후외출" ? true : false,
           sun: dotw === "일" && type === "외출" ? true : false,
-          reason
+          reason,
+          outgoDate: calendar.date
         })
       }
 
